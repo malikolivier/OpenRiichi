@@ -154,7 +154,7 @@ class ScoringPlayerElement : Control
 
     private void animation_score_fade_animate_start()
     {
-        fade_sound.play(true);
+        fade_sound.play();
     }
 
     private void animation_score_fade_animate(float time)
