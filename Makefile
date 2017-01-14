@@ -76,4 +76,4 @@ windows:
 
 clean:
 	rm -f bin/$(NAME)*
-	find . -type f -name '*.c' -exec rm {} +
+	/usr/bin/find . -type f -name '*.c' -exec rm {} +
