@@ -16,7 +16,16 @@ public class AnimationTimings : Serializable
         AnimationTime score_counting,
         AnimationTime players_points_counting,
         AnimationTime players_score_fade,
-        AnimationTime players_score_counting
+        AnimationTime players_score_counting,
+
+        AnimationTime initial_draw,
+        AnimationTime tile_draw,
+        AnimationTime tile_discard,
+        AnimationTime call,
+        AnimationTime hand_reveal,
+        AnimationTime split_wall,
+        AnimationTime win,
+        AnimationTime riichi
 	)
 	{
         this.winning_draw_animation_time = winning_draw_animation_time;
@@ -34,6 +43,15 @@ public class AnimationTimings : Serializable
         this.players_points_counting = players_points_counting;
         this.players_score_fade = players_score_fade;
         this.players_score_counting = players_score_counting;
+
+        this.initial_draw = initial_draw;
+        this.tile_draw = tile_draw;
+        this.tile_discard = tile_discard;
+        this.call = call;
+        this.hand_reveal = hand_reveal;
+        this.split_wall = split_wall;
+        this.win = win;
+        this.riichi = riichi;
 	}
 
 	public float get_animation_round_end_delay(RoundScoreState round)
@@ -93,4 +111,15 @@ public class AnimationTimings : Serializable
 	public AnimationTime players_points_counting { get; protected set; }
 	public AnimationTime players_score_fade { get; protected set; }
 	public AnimationTime players_score_counting { get; protected set; }
+
+    //////////////////
+
+    public AnimationTime initial_draw { get; protected set; }
+    public AnimationTime tile_draw { get; protected set; }
+    public AnimationTime tile_discard { get; protected set; }
+    public AnimationTime call { get; protected set; }
+    public AnimationTime hand_reveal { get; protected set; }
+    public AnimationTime split_wall { get; protected set; }
+    public AnimationTime win { get; protected set; }
+    public AnimationTime riichi { get; protected set; }
 }

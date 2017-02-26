@@ -365,6 +365,15 @@ namespace GameServer
             var players_score_fade = new AnimationTime(0, 0.5f, 0);
             var players_score_counting = new AnimationTime(1, 3, 2);
 
+            var initial_draw = new AnimationTime(0, 0.15f, 0.0f);
+            var tile_draw = new AnimationTime(0, 0.5f, 0);
+            var tile_discard = new AnimationTime(0, 0.5f, 0);
+            var call = new AnimationTime(0, 0.5f, 0);
+            var hand_reveal = new AnimationTime(0, 0.2f, 0.8f);
+            var split_wall = new AnimationTime(0, 0.5f, 0);
+            var win = new AnimationTime(0, 0.5f, 0.5f);
+            var riichi = new AnimationTime(0, 0.3f, 0.5f);
+
             AnimationTimings timings = new AnimationTimings
             (
                 winning_draw_animation_time,
@@ -381,7 +390,16 @@ namespace GameServer
                 score_counting,
                 players_points_counting,
                 players_score_fade,
-                players_score_counting
+                players_score_counting,
+
+                initial_draw,
+                tile_draw,
+                tile_discard,
+                call,
+                hand_reveal,
+                split_wall,
+                win,
+                riichi
             );
 
             GameStartInfo info = new GameStartInfo

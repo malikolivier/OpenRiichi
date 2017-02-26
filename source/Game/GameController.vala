@@ -97,7 +97,7 @@ class GameController : Object
     private void create_round_state(RoundStartInfo round_start)
     {
         round = new ClientRoundState(round_start, settings, player_index, game.round_wind, game.dealer_index, game.can_riichi());
-        round.send_message.connect(connection.send_message);
+        round.do_action.connect(do_action);
         round.set_chii_state.connect(menu.set_chii);
         round.set_pon_state.connect(menu.set_pon);
         round.set_kan_state.connect(menu.set_kan);
@@ -140,6 +140,11 @@ class GameController : Object
         }
     }
 
+    private void do_action(ClientAction action)
+    {
+        connection.send_message(new ClientMessageGameAction(action));
+    }
+
     private void create_round(RoundStartInfo info)
     {
         if (renderer != null)
@@ -153,7 +158,7 @@ class GameController : Object
         menu = new GameMenuView(settings, index, start_info.timings);
         menu.score_finished.connect(menu_score_finished);
 
-        renderer = new GameRenderView(info, player_index, game.round_wind, game.dealer_index, options, game.score);
+        renderer = new GameRenderView(info, player_index, game.round_wind, game.dealer_index, options, game.score, start_info.timings);
         parent_view.add_child(renderer);
         parent_view.add_child(menu);
 

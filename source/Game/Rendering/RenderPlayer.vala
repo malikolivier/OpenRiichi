@@ -130,24 +130,24 @@ public class RenderPlayer
         hand.order_hand(true);
     }
 
-    public void riichi(bool open)
+    public void riichi(bool open, AnimationTime time)
     {
         this.open = open;
 
         if (open)
             open_hand();
 
-        render_riichi.animate();
+        render_riichi.animate(time);
         pond.riichi();
         in_riichi = true;
     }
 
-    public void return_riichi()
+    public void return_riichi(AnimationTime time)
     {
-        render_riichi.animate_return();
+        render_riichi.animate_return(time);
     }
 
-    public void late_kan(RenderTile tile)
+    public void late_kan(RenderTile tile, AnimationTime time)
     {
         RenderCalls.RenderCallPon pon = calls.get_pon(tile.tile_type.tile_type);
         ArrayList<RenderTile> tiles = new ArrayList<RenderTile>();
@@ -157,10 +157,10 @@ public class RenderPlayer
         hand.remove(tile);
 
         RenderCalls.RenderCallLateKan kan = new RenderCalls.RenderCallLateKan(tiles, tile_size, pon.alignment);
-        calls.late_kan(pon, kan);
+        calls.late_kan(pon, kan, time);
     }
 
-    public void closed_kan(TileType type)
+    public void closed_kan(TileType type, AnimationTime time)
     {
         ArrayList<RenderTile> tiles = hand.get_tiles_type(type);
 
@@ -168,10 +168,10 @@ public class RenderPlayer
             hand.remove(tile);
 
         RenderCalls.RenderCallClosedKan kan = new RenderCalls.RenderCallClosedKan(tiles, tile_size);
-        calls.add(kan);
+        calls.add(kan, time);
     }
 
-    public void open_kan(RenderPlayer discard_player, RenderTile discard_tile, RenderTile tile_1, RenderTile tile_2, RenderTile tile_3)
+    public void open_kan(RenderPlayer discard_player, RenderTile discard_tile, RenderTile tile_1, RenderTile tile_2, RenderTile tile_3, AnimationTime time)
     {
         hand.remove(tile_1);
         hand.remove(tile_2);
@@ -184,10 +184,10 @@ public class RenderPlayer
         tiles.add(tile_3);
 
         RenderCalls.RenderCallOpenKan kan = new RenderCalls.RenderCallOpenKan(tiles, tile_size, RenderCalls.players_to_alignment(this, discard_player));
-        calls.add(kan);
+        calls.add(kan, time);
     }
 
-    public void pon(RenderPlayer discard_player, RenderTile discard_tile, RenderTile tile_1, RenderTile tile_2)
+    public void pon(RenderPlayer discard_player, RenderTile discard_tile, RenderTile tile_1, RenderTile tile_2, AnimationTime time)
     {
         hand.remove(tile_1);
         hand.remove(tile_2);
@@ -198,10 +198,10 @@ public class RenderPlayer
         tiles.add(tile_2);
 
         RenderCalls.RenderCallPon pon = new RenderCalls.RenderCallPon(tiles, tile_size, RenderCalls.players_to_alignment(this, discard_player));
-        calls.add(pon);
+        calls.add(pon, time);
     }
 
-    public void chii(RenderPlayer discard_player, RenderTile discard_tile, RenderTile tile_1, RenderTile tile_2)
+    public void chii(RenderPlayer discard_player, RenderTile discard_tile, RenderTile tile_1, RenderTile tile_2, AnimationTime time)
     {
         hand.remove(tile_1);
         hand.remove(tile_2);
@@ -211,7 +211,7 @@ public class RenderPlayer
         tiles.add(tile_2);
 
         RenderCalls.RenderCallChii chii = new RenderCalls.RenderCallChii(discard_tile, tiles, tile_size);
-        calls.add(chii);
+        calls.add(chii, time);
     }
 
     public ArrayList<RenderTile> hand_tiles { get { return hand.tiles; } }

@@ -1,0 +1,30 @@
+{
+    // See https://go.microsoft.com/fwlink/?LinkId=733558
+    // for the documentation about the tasks.json format
+    "version": "0.1.0",
+    "command": "sh",
+    "args": ["-c"],
+    "isShellCommand": true,
+    "showOutput": "always",
+    "suppressTaskName": true,
+    "options": {
+        "cwd": "${workspaceRoot}/bin"
+    },
+
+    "tasks": [
+        {
+            "taskName": "make",
+            "args": ["make -C .. windowsDebug"],
+            "isBuildCommand": true
+        },
+        {
+            "taskName": "clean",
+            "args": ["make -C .. clean"]
+        },
+        {
+            "taskName": "run",
+            "args": ["./OpenRiichi.exe"],
+            "isTestCommand": true
+        }
+    ]
+}

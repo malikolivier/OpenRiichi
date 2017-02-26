@@ -18,8 +18,9 @@ public class GameRenderView : View3D, IGameRenderer
     private int dealer_index;
     private Options options;
     private RoundScoreState score;
+    private AnimationTimings timings;
 
-    public GameRenderView(RoundStartInfo info, int player_index, Wind round_wind, int dealer_index, Options options, RoundScoreState score)
+    public GameRenderView(RoundStartInfo info, int player_index, Wind round_wind, int dealer_index, Options options, RoundScoreState score, AnimationTimings timings)
     {
         this.info = info;
         this.player_index = player_index;
@@ -27,11 +28,12 @@ public class GameRenderView : View3D, IGameRenderer
         this.dealer_index = dealer_index;
         this.options = options;
         this.score = score;
+        this.timings = timings;
     }
 
     public override void added()
     {
-        scene = new RenderSceneManager(options, player_index, round_wind, dealer_index, info.wall_index, store.audio_player, score);
+        scene = new RenderSceneManager(options, player_index, round_wind, dealer_index, info.wall_index, store.audio_player, score, timings);
 
         scene.added(store);
         tiles = scene.tiles;
@@ -39,8 +41,8 @@ public class GameRenderView : View3D, IGameRenderer
 
         hover_sound = store.audio_player.load_sound("mouse_over");
 
-        buffer_action(new RenderActionDelay(0.5f));
-        buffer_action(new RenderActionSplitDeadWall());
+        buffer_action(new RenderActionDelay(new AnimationTime.preset(0.5f)));
+        buffer_action(new RenderActionSplitDeadWall(timings.split_wall));
 
         int index = dealer_index;
 
@@ -48,14 +50,14 @@ public class GameRenderView : View3D, IGameRenderer
         {
             for (int p = 0; p < 4; p++)
             {
-                buffer_action(new RenderActionInitialDraw(players[index % 4], 4));
+                buffer_action(new RenderActionInitialDraw(timings.initial_draw, players[index % 4], 4));
                 index++;
             }
         }
 
         for (int p = 0; p < 4; p++)
         {
-            buffer_action(new RenderActionInitialDraw(players[index % 4], 1));
+            buffer_action(new RenderActionInitialDraw(timings.initial_draw, players[index % 4], 1));
             index++;
         }
 
@@ -115,13 +117,13 @@ public class GameRenderView : View3D, IGameRenderer
         for (int i = 0; i < winners.length; i++)
             winners[i] = players[winner_indices[i]];
 
-        buffer_action(new RenderActionRon(winners, discard_player, tile, return_riichi_player, allow_dora_flip));
+        buffer_action(new RenderActionRon(timings.win, winners, discard_player, tile, return_riichi_player, allow_dora_flip));
     }
 
     private void tsumo(int player_index)
     {
         RenderPlayer player = players[player_index];
-        buffer_action(new RenderActionTsumo(player));
+        buffer_action(new RenderActionTsumo(timings.win, player));
     }
 
     private void draw(int[] tenpai_indices, GameDrawType draw_type)
@@ -141,7 +143,7 @@ public class GameRenderView : View3D, IGameRenderer
             foreach (int i in tenpai_indices)
                 tenpai_players.add(players[i]);
 
-            buffer_action(new RenderActionGameDraw(tenpai_players, draw_type));
+            buffer_action(new RenderActionGameDraw(new AnimationTime.zero(), tenpai_players, draw_type));
         }
     }
 
@@ -153,7 +155,7 @@ public class GameRenderView : View3D, IGameRenderer
     private void tile_draw(int player_index)
     {
         RenderPlayer player = players[player_index];
-        buffer_action(new RenderActionDraw(player));
+        buffer_action(new RenderActionDraw(timings.tile_draw, player));
 
         /*if (tile_draw.dead_wall)
             player.draw_tile(scene.wall.draw_dead_wall());
@@ -164,14 +166,14 @@ public class GameRenderView : View3D, IGameRenderer
     public void dead_tile_draw(int player_index)
     {
         RenderPlayer player = players[player_index];
-        buffer_action(new RenderActionDrawDeadWall(player));
+        buffer_action(new RenderActionDrawDeadWall(timings.tile_draw, player));
     }
 
     private void tile_discard(int player_index, int tile_ID)
     {
         RenderPlayer player = players[player_index];
         RenderTile tile = tiles[tile_ID];
-        buffer_action(new RenderActionDiscard(player, tile));
+        buffer_action(new RenderActionDiscard(timings.tile_discard, player, tile));
     }
 
     private void flip_dora()
@@ -187,20 +189,20 @@ public class GameRenderView : View3D, IGameRenderer
     private void riichi(int player_index, bool open)
     {
         RenderPlayer player = players[player_index];
-        buffer_action(new RenderActionRiichi(player, open));
+        buffer_action(new RenderActionRiichi(timings.riichi, player, open));
     }
 
     private void late_kan(int player_index, int tile_ID)
     {
         RenderPlayer player = players[player_index];
         RenderTile tile = tiles[tile_ID];
-        buffer_action(new RenderActionLateKan(player, tile));
+        buffer_action(new RenderActionLateKan(timings.call, player, tile));
     }
 
     private void closed_kan(int player_index, TileType type)
     {
         RenderPlayer player = players[player_index];
-        buffer_action(new RenderActionClosedKan(player, type));
+        buffer_action(new RenderActionClosedKan(timings.call, player, type));
     }
 
     private void open_kan(int player_index, int discard_player_index, int tile_ID, int tile_1_ID, int tile_2_ID, int tile_3_ID)
@@ -213,7 +215,7 @@ public class GameRenderView : View3D, IGameRenderer
         RenderTile tile_2 = tiles[tile_2_ID];
         RenderTile tile_3 = tiles[tile_3_ID];
 
-        buffer_action(new RenderActionOpenKan(player, discard_player, tile, tile_1, tile_2, tile_3));
+        buffer_action(new RenderActionOpenKan(timings.call, player, discard_player, tile, tile_1, tile_2, tile_3));
 
         dead_tile_draw(player_index);
     }
@@ -227,7 +229,7 @@ public class GameRenderView : View3D, IGameRenderer
         RenderTile tile_1 = tiles[tile_1_ID];
         RenderTile tile_2 = tiles[tile_2_ID];
 
-        buffer_action(new RenderActionPon(player, discard_player, tile, tile_1, tile_2));
+        buffer_action(new RenderActionPon(timings.call, player, discard_player, tile, tile_1, tile_2));
     }
 
     private void chii(int player_index, int discard_player_index, int tile_ID, int tile_1_ID, int tile_2_ID)
@@ -239,7 +241,7 @@ public class GameRenderView : View3D, IGameRenderer
         RenderTile tile_1 = tiles[tile_1_ID];
         RenderTile tile_2 = tiles[tile_2_ID];
 
-        buffer_action(new RenderActionChii(player, discard_player, tile, tile_1, tile_2));
+        buffer_action(new RenderActionChii(timings.call, player, discard_player, tile, tile_1, tile_2));
     }
 
     public void set_active(bool active)

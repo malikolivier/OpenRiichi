@@ -8,6 +8,7 @@ class RenderSceneManager : Object
     private int dealer;
     private int wall_index;
     private RoundScoreState score;
+    private AnimationTimings timings;
 
     private AudioPlayer audio;
     private Sound slide_sound;
@@ -35,7 +36,7 @@ class RenderSceneManager : Object
     private RenderAction? current_action = null;
     private float action_start_time;
 
-    public RenderSceneManager(Options options, int player_index, Wind round_wind, int dealer, int wall_index, AudioPlayer audio, RoundScoreState score)
+    public RenderSceneManager(Options options, int player_index, Wind round_wind, int dealer, int wall_index, AudioPlayer audio, RoundScoreState score, AnimationTimings timings)
     {
         this.options = options;
         this.player_index = player_index;
@@ -44,6 +45,7 @@ class RenderSceneManager : Object
         this.wall_index = wall_index;
         this.audio = audio;
         this.score = score;
+        this.timings = timings;
 
         players = new RenderPlayer[4];
         tiles = new RenderTile[136];
@@ -138,7 +140,7 @@ class RenderSceneManager : Object
 
 
         if (current_action != null &&
-            delta.time - action_start_time > current_action.time)
+            delta.time - action_start_time > current_action.time.total())
             current_action = null;
 
         if (current_action == null)
@@ -227,20 +229,20 @@ class RenderSceneManager : Object
     private void action_split_dead_wall(RenderActionSplitDeadWall action)
     {
         slide_sound.play();
-        wall.split_dead_wall();
+        wall.split_dead_wall(action.time);
     }
 
     private void action_initial_draw(RenderActionInitialDraw action)
     {
         draw_sound.play();
         for (int i = 0; i < action.tiles; i++)
-            action.player.draw_tile(wall.draw_wall());
+            action.player.draw_tile(wall.draw_wall(action.time));
     }
 
     private void action_draw(RenderActionDraw action)
     {
         draw_sound.play();
-        action.player.draw_tile(wall.draw_wall());
+        action.player.draw_tile(wall.draw_wall(action.time));
 
         if (action.player.seat == player_index)
             active = true;
@@ -251,7 +253,7 @@ class RenderSceneManager : Object
         wall.flip_dora();
         wall.dead_tile_add();
         draw_sound.play();
-        action.player.draw_tile(wall.draw_dead_wall());
+        action.player.draw_tile(wall.draw_dead_wall(action.time));
 
         if (action.player.seat == player_index)
             active = true;
@@ -260,7 +262,7 @@ class RenderSceneManager : Object
     private void action_discard(RenderActionDiscard action)
     {
         discard_sound.play();
-        action.player.discard(action.tile);
+        action.player.discard(action.tile, action.time);
     }
 
     private void action_ron(RenderActionRon action)
@@ -268,35 +270,35 @@ class RenderSceneManager : Object
         ron_sound.play();
 
         if (action.winners.length == 1 && action.tile != null)
-            action.winners[0].ron(action.tile);
+            action.winners[0].ron(action.tile, action.time);
 
         bool flip_ura_dora = false;
 
         foreach (RenderPlayer player in action.winners)
         {
             if (!player.open)
-                add_action(new RenderActionHandReveal(player));
+                add_action(new RenderActionHandReveal(timings.hand_reveal, player));
             if (player.in_riichi)
                 flip_ura_dora = true;
         }
 
         if (action.return_riichi_player != null)
-            add_action(new RenderActionReturnRiichi(action.return_riichi_player));
+            add_action(new RenderActionReturnRiichi(new AnimationTime.zero(), action.return_riichi_player));
 
         if (flip_ura_dora && action.allow_dora_flip)
-            add_action(new RenderActionFlipUraDora());
+            add_action(new RenderActionFlipUraDora(new AnimationTime.zero()));
     }
 
     private void action_tsumo(RenderActionTsumo action)
     {
         tsumo_sound.play();
-        action.player.tsumo();
+        action.player.tsumo(action.time);
 
         if (!action.player.open)
-            add_action(new RenderActionHandReveal(action.player));
+            add_action(new RenderActionHandReveal(timings.hand_reveal, action.player));
 
         if (action.player.in_riichi)
-            add_action(new RenderActionFlipUraDora());
+            add_action(new RenderActionFlipUraDora(new AnimationTime.zero()));
     }
 
     private void action_riichi(RenderActionRiichi action)
@@ -305,7 +307,7 @@ class RenderSceneManager : Object
         if (action.open)
             reveal_sound.play();
 
-        action.player.riichi(action.open);
+        action.player.riichi(action.open, action.time);
     }
 
     private void action_return_riichi(RenderActionReturnRiichi action)
@@ -315,20 +317,20 @@ class RenderSceneManager : Object
 
     private void action_late_kan(RenderActionLateKan action)
     {
-        action.player.late_kan(action.tile);
+        action.player.late_kan(action.tile, action.time);
         kan_sound.play();
     }
 
     private void action_closed_kan(RenderActionClosedKan action)
     {
-        action.player.closed_kan(action.tile_type);
+        action.player.closed_kan(action.tile_type, action.time);
         kan_sound.play();
     }
 
     private void action_open_kan(RenderActionOpenKan action)
     {
         action.discarder.rob_tile(action.tile);
-        action.player.open_kan(action.discarder, action.tile, action.tile_1, action.tile_2, action.tile_3);
+        action.player.open_kan(action.discarder, action.tile, action.tile_1, action.tile_2, action.tile_3, action.time);
         kan_sound.play();
     }
 
@@ -336,7 +338,7 @@ class RenderSceneManager : Object
     {
         pon_sound.play();
         action.discarder.rob_tile(action.tile);
-        action.player.pon(action.discarder, action.tile, action.tile_1, action.tile_2);
+        action.player.pon(action.discarder, action.tile, action.tile_1, action.tile_2, action.time);
 
         if (action.player.seat == player_index)
             active = true;
@@ -346,7 +348,7 @@ class RenderSceneManager : Object
     {
         chii_sound.play();
         action.discarder.rob_tile(action.tile);
-        action.player.chii(action.discarder, action.tile, action.tile_1, action.tile_2);
+        action.player.chii(action.discarder, action.tile, action.tile_1, action.tile_2, action.time);
 
         if (action.player.seat == player_index)
             active = true;
@@ -362,13 +364,13 @@ class RenderSceneManager : Object
             {
                 if (!player.open)
                 {
-                    player.open_hand();
+                    player.open_hand(action.time);
                     revealed = true;
                 }
             }
             else if (player != observer && action.draw_type != GameDrawType.VOID_HAND)
             {
-                player.close_hand();
+                player.close_hand(action.time);
                 revealed = true;
             }
         }
@@ -380,7 +382,7 @@ class RenderSceneManager : Object
     private void action_hand_reveal(RenderActionHandReveal action)
     {
         reveal_sound.play();
-        action.player.open_hand();
+        action.player.open_hand(action.time);
     }
 
     private void action_flip_dora(RenderActionFlipDora action)

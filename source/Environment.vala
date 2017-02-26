@@ -104,6 +104,25 @@ public class Environment
         typeof(ServerMessageMenuGameLog).class_ref();
         typeof(ServerMessageDraw).class_ref();
 
+        typeof(ClientMessageMenuReady).class_ref();
+
+        typeof(ServerAction).class_ref();
+        typeof(DefaultDiscardServerAction).class_ref();
+        typeof(DefaultNoCallServerAction).class_ref();
+        typeof(ClientServerAction).class_ref();
+        typeof(ClientAction).class_ref();
+        typeof(TileDiscardClientAction).class_ref();
+        typeof(NoCallClientAction).class_ref();
+        typeof(RonClientAction).class_ref();
+        typeof(TsumoClientAction).class_ref();
+        typeof(VoidHandClientAction).class_ref();
+        typeof(RiichiClientAction).class_ref();
+        typeof(LateKanClientAction).class_ref();
+        typeof(ClosedKanClientAction).class_ref();
+        typeof(OpenKanClientAction).class_ref();
+        typeof(PonClientAction).class_ref();
+        typeof(ChiiClientAction).class_ref();
+
         typeof(Lobby.LobbyInformation).class_ref();
         typeof(Lobby.ServerLobbyMessage).class_ref();
         typeof(Lobby.ServerLobbyMessageCloseTunnel).class_ref();
@@ -135,19 +154,6 @@ public class Environment
         typeof(GameLog).class_ref();
         typeof(GameLogRound).class_ref();
         typeof(GameLogLine).class_ref();
-        typeof(DefaultTileDiscardGameLogLine).class_ref();
-        typeof(DefaultCallActionGameLogLine).class_ref();
-        typeof(ClientTileDiscardGameLogLine).class_ref();
-        typeof(ClientNoCallGameLogLine).class_ref();
-        typeof(ClientRonGameLogLine).class_ref();
-        typeof(ClientTsumoGameLogLine).class_ref();
-        typeof(ClientVoidHandGameLogLine).class_ref();
-        typeof(ClientRiichiGameLogLine).class_ref();
-        typeof(ClientLateKanGameLogLine).class_ref();
-        typeof(ClientClosedKanGameLogLine).class_ref();
-        typeof(ClientOpenKanGameLogLine).class_ref();
-        typeof(ClientPonGameLogLine).class_ref();
-        typeof(ClientChiiGameLogLine).class_ref();
 
         typeof(NullBot).class_ref();
         typeof(SimpleBot).class_ref();

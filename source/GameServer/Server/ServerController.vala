@@ -12,13 +12,10 @@ namespace GameServer
         private ServerPlayer host;
         private ArrayList<ServerPlayer> players;
         private ArrayList<ServerPlayer> observers;
+        private GameLog? log;
         private ServerSettings settings;
         private GameStartInfo info;
-        private ServerGameRoundInfoSource source;
-        private LogGameController? log;
-        private bool do_logging;
         private Random rnd = new Random();
-        private bool reveal_tiles;
 
         private Mutex mutex = Mutex();
         private bool started = false;
@@ -107,15 +104,9 @@ namespace GameServer
                 foreach (var player in menu.observers)
                     observers.add(player);
 
-                log = new LogGameController(menu.log);
-                players = log.players;
+                log = menu.log;
                 settings = log.settings;
                 this.info = log.start_info;
-                source = log.source;
-                reveal_tiles = true;
-
-                do_logging = false;
-
             }
             else
             {
@@ -123,14 +114,11 @@ namespace GameServer
                 observers = menu.observers;
                 settings = menu.settings;
                 this.info = info;
-                source = new DefaultServerGameRoundInfoSource(rnd);
-                reveal_tiles = false;
 
-                do_logging = true;
+                foreach (ServerPlayer player in players)
+                    player.receive_message.connect(message_received);
             }
 
-            foreach (ServerPlayer player in players)
-                player.receive_message.connect(message_received);
             foreach (ServerPlayer player in observers)
                 player.receive_message.connect(message_received);
 
@@ -144,7 +132,11 @@ namespace GameServer
 
         private void server_worker()
         {
-            server = new Server(players, observers, rnd, info, settings, source, do_logging, reveal_tiles);
+            if (log != null)
+                server = new LogServer(observers, rnd, settings, log);
+            else
+                server = new RegularServer(players, observers, rnd, info, settings);
+            
             Timer timer = new Timer();
 
             while (!finished && !server.finished)
@@ -152,8 +144,6 @@ namespace GameServer
                 mutex.lock();
                 float time = (float)timer.elapsed();
                 process_messages();
-                if (log != null)
-                    log.process(time);
                 server.process(time);
                 mutex.unlock();
                 sleep();

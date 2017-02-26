@@ -6,8 +6,6 @@ class SimpleBot : Bot
 
     protected override void do_turn_decision()
     {
-        turn_delay();
-
         if (round_state.can_tsumo())
         {
             do_tsumo();
@@ -57,7 +55,6 @@ class SimpleBot : Bot
     {
         if (round_state.can_ron(round_state.self))
         {
-            call_delay();
             call_ron();
             return;
         }
@@ -65,7 +62,6 @@ class SimpleBot : Bot
         {
             if (tile.is_dragon_tile() || tile.is_wind(round_state.self.wind) || tile.is_wind(round_state.round_wind))
             {
-                call_delay();
                 call_pon();
                 return;
             }
@@ -243,16 +239,6 @@ class SimpleBot : Bot
         }
 
         return false;
-    }
-
-    private void turn_delay()
-    {
-        Thread.usleep(1 * 1000 * 1000);
-    }
-
-    private void call_delay()
-    {
-        Thread.usleep(500 * 1000);
     }
 
     public override string name { get { return "SimpleBot"; } }
