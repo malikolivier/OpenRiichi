@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 public class ScoringHandView : View3D
@@ -5,20 +6,15 @@ public class ScoringHandView : View3D
     private Scoring score;
 
     private ArrayList<RenderTile> tiles = new ArrayList<RenderTile>();
-    private Camera camera = new Camera();
-    private LightSource light1 = new LightSource();
-    private LightSource light2 = new LightSource();
     private float width = 1;
 
     public ScoringHandView(Scoring score)
     {
-        base();
-
         this.score = score;
         resize_style = ResizeStyle.ABSOLUTE;
     }
 
-    public override void added()
+    /*public override void added()
     {
         Options options = new Options.from_disk();
 
@@ -27,8 +23,8 @@ public class ScoringHandView : View3D
         float tile_scale = 0.75f;
 
         RenderGeometry3D model = store.load_geometry_3D("tile_" + extension, false);
-        Vec3 tile_size = ((RenderBody3D)model.geometry[0]).model.size;
-        tile_size = Vec3(tile_size.x, tile_size.y + ((RenderBody3D)model.geometry[1]).model.size.y, tile_size.z).mul_scalar(tile_scale);
+        Vec3 tile_size = ((RenderObject3D)model.geometry[0]).model.size;
+        tile_size = Vec3(tile_size.x, tile_size.y + ((RenderObject3D)model.geometry[1]).model.size.y, tile_size.z).mul_scalar(tile_scale);
 
         width = (score.player.hand.size + 2) * tile_size.x;
 
@@ -160,14 +156,14 @@ public class ScoringHandView : View3D
             tiles[i].render(scene);
 
         state.add_scene(scene);
-    }
+    }*/
 
     public float alpha
     {
         set
         {
-            foreach (RenderTile tile in tiles)
-                tile.alpha = value;
+            /*foreach (RenderTile tile in tiles)
+                tile.alpha = value;*/
         }
     }
 }

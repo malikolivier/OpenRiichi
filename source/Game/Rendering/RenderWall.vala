@@ -1,9 +1,9 @@
+using Engine;
 using Gee;
 
-// This particular signal receiver must be an object (otherwise the application will crash randomly...)
-// I'm guessing it has something to do with being subscribed to a signal in a list of objects, but I'm not sure. Either way it's a bug in Vala
-public class RenderWall : Object
+public class RenderWall : WorldObject
 {
+    private RenderTile[] tiles;
     private Vec3 tile_size;
     private WallPart[] walls;
     private DeadWall dead_wall;
@@ -12,14 +12,18 @@ public class RenderWall : Object
     private int dealer;
     private int split;
 
-    public RenderWall(RenderTile[] tiles, Vec3 tile_size, Vec3 center, float offset, int dealer, int split)
+    public RenderWall(RenderTile[] tiles, Vec3 tile_size, int dealer, int split)
     {
+        this.tiles = tiles;
         this.tile_size = tile_size;
         this.dealer = dealer;
         this.split = split;
         int start_wall = (4 - dealer) % 4;
         active_wall = last_wall = start_wall;
+    }
 
+    protected override void added()
+    {
         walls = new WallPart[4];
         for (int i = 0; i < 4; i++)
         {
@@ -27,8 +31,13 @@ public class RenderWall : Object
             for (int j = 0; j < 34; j++)
                 wt[j] = tiles[i * 34 + j];
 
-            Vec3 pos = Calculations.rotate_y(Vec3.empty(), -(float)i / 2, Vec3(0, 0, offset)).plus(center);
-            walls[i] = new WallPart(wt, tile_size, pos, i);
+            WorldObject wrap = new WorldObject();
+            walls[i] = new WallPart(wt, tile_size);
+            add_object(wrap);
+            wrap.rotation = new Quat.from_euler(i / 2.0f, 0, 0);
+            wrap.add_object(walls[i]);
+            walls[i].position = Vec3(0, 0, -10 * tile_size.x);
+
             walls[i].next_wall.connect(next_wall);
         }
     }
@@ -80,25 +89,27 @@ public class RenderWall : Object
         active_wall = (active_wall + 1) % 4;
     }
 
-    public class WallPart
+    public class WallPart : WorldObject
     {
         private ArrayList<RenderTile> wall_left = new ArrayList<RenderTile>();
         private ArrayList<RenderTile> wall_right = new ArrayList<RenderTile>();
         private Vec3 tile_size;
-        private Vec3 position;
-        private int rotation;
         private int removed_tiles = 0;
 
         public signal void next_wall();
 
-        public WallPart(RenderTile[] tiles, Vec3 tile_size, Vec3 position, int rotation)
+        public WallPart(RenderTile[] tiles, Vec3 tile_size)
         {
             for (int i = 0; i < tiles.length; i++)
                 wall_left.add(tiles[i]);
 
             this.tile_size = tile_size;
-            this.position = position;
-            this.rotation = rotation;
+        }
+
+        public override void added()
+        {
+            foreach (RenderTile tile in wall_left)
+                add_object(tile);
 
             order();
         }
@@ -124,11 +135,11 @@ public class RenderWall : Object
                 right.add(wall_left[i]);
 
             float offset = 1.0f * tile_size.x;
-            float left_m = 0;//-1;
+            float left_m = -1;
             float center_m = 0;
             float right_m = 1.1f;
 
-            /*if (left.size == 0)
+            if (left.size == 0)
             {
                 left_m = 0;
                 center_m -= 0.5f;
@@ -137,14 +148,12 @@ public class RenderWall : Object
             {
                 right_m = 0;
                 center_m += 0.5f;
-            }*/
-
-            float r = -(float)rotation / 2;
+            }
 
             for (int i = 0; i < left.size; i++)
             {
                 RenderTile t = left[i];
-                Vec3 pos = Calculations.rotate_y(Vec3.empty(), r, {left_m * offset});
+                Vec3 pos = Vec3(left_m * offset, 0, 0);
                 pos = t.position.plus(pos);
 
                 t.animate_towards(pos, t.rotation);
@@ -152,7 +161,7 @@ public class RenderWall : Object
             for (int i = 0; i < center.size; i++)
             {
                 RenderTile t = center[i];
-                Vec3 pos = Calculations.rotate_y(Vec3.empty(), r, {center_m * offset});
+                Vec3 pos = Vec3(center_m * offset, 0, 0);
                 pos = t.position.plus(pos);
 
                 t.animate_towards(pos, t.rotation);
@@ -160,7 +169,7 @@ public class RenderWall : Object
             for (int i = 0; i < right.size; i++)
             {
                 RenderTile t = right[i];
-                Vec3 pos = Calculations.rotate_y(Vec3.empty(), r, {right_m * offset});
+                Vec3 pos = Vec3(right_m * offset, 0, 0);
                 pos = t.position.plus(pos);
 
                 t.animate_towards(pos, t.rotation);
@@ -239,16 +248,10 @@ public class RenderWall : Object
                     0
                 );
 
-                pos = Calculations.rotate_y(Vec3.empty(), -(float)rotation / 2, pos).plus(position);
+                Quat rot = new Quat.from_euler(0, 1, 0);
 
-                Quat rot = new Quat.from_euler
-                (
-                    1,
-                    (float)rotation / 2 + 1,
-                    0
-                );
-
-                tile.set_absolute_location(pos, rot);
+                tile.rotation = rot;
+                tile.position = pos;
             }
         }
 
@@ -295,8 +298,7 @@ public class RenderWall : Object
             doras.add(t);
             ura_doras.add(tiles[dora_index + 1]);
 
-            Quat rot = t.rotation;
-            rot = new Quat.from_euler(1, 0, 0).mul(rot);
+            Quat rot = new Quat.from_euler(0, 1, 0).mul(t.rotation);
 
             t.animate_towards(t.position, rot);
 

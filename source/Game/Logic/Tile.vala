@@ -168,35 +168,7 @@ public class Tile : Serializable
     public int ID { get; set; }
     public TileType tile_type { get; set; }
     public bool dora { get; set; }
-
-    /*public TileSuit tile_sort
-    {
-        get
-        {
-            if (tile_type == TileType.BLANK)
-                return TileSuit.BLANK;
-
-            if (tile_type >= TileType.MAN1 && tile_type <= TileType.MAN9)
-                return TileSuit.MAN;
-            if (tile_type >= TileType.PIN1 && tile_type <= TileType.PIN9)
-                return TileSuit.PIN;
-            if (tile_type >= TileType.SOU1 && tile_type <= TileType.SOU9)
-                return TileSuit.SOU;
-
-            return TileSuit.DRAGON;
-        }
-    }*/
 }
-
-/*public enum TileSuit
-{
-    BLANK,
-    MAN,
-    PIN,
-    SOU,
-    WIND,
-    DRAGON
-}*/
 
 public enum Wind
 {
@@ -252,6 +224,34 @@ public static string WIND_TO_STRING(Wind wind)
     case Wind.NORTH:
         return "北";
     }
+}
+
+public static string TILE_TYPE_TO_STRING(TileType type)
+{
+    int t = (int)type;
+
+    if (t >= (int)TileType.MAN1 && t <= (int)TileType.MAN9)
+        return "Man" + (t - (int)TileType.MAN1 + 1).to_string();
+    else if (t >= (int)TileType.PIN1 && t <= (int)TileType.PIN9)
+        return "Pin" + (t - (int)TileType.PIN1 + 1).to_string();
+    else if (t >= (int)TileType.SOU1 && t <= (int)TileType.SOU9)
+        return "Sou" + (t - (int)TileType.SOU1 + 1).to_string();
+    else if (type == TileType.TON)
+        return "Ton";
+    else if (type == TileType.NAN)
+        return "Nan";
+    else if (type == TileType.SHAA)
+        return "Shaa";
+    else if (type == TileType.PEI)
+        return "Pei";
+    else if (type == TileType.HAKU)
+        return "Haku";
+    else if (type == TileType.HATSU)
+        return "Hatsu";
+    else if (type == TileType.CHUN)
+        return "Chun";
+
+    return "Blank";
 }
 
 public enum TileType

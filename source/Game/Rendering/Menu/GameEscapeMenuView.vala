@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 public class GameEscapeMenuView : View2D
@@ -17,11 +18,8 @@ public class GameEscapeMenuView : View2D
 
     protected override void added()
     {
-        ResetContainer reset = new ResetContainer();
-        add_child(reset);
-
         RectangleControl background = new RectangleControl();
-        reset.add_child(background);
+        add_child(background);
         background.color = Color.with_alpha(0.7f);
         background.resize_style = ResizeStyle.RELATIVE;
         background.selectable = true;
@@ -81,7 +79,7 @@ public class GameEscapeMenuView : View2D
         options_view.visible = false;
     }
 
-    protected override void do_key_press(KeyArgs key)
+    protected override void key_press(KeyArgs key)
     {
         key.handled = true;
     }

@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 public class ScoringDoraView : View3D
@@ -7,9 +8,6 @@ public class ScoringDoraView : View3D
     private int back_tiles;
 
     private ArrayList<RenderTile> tiles = new ArrayList<RenderTile>();
-    private Camera camera = new Camera();
-    private LightSource light1 = new LightSource();
-    private LightSource light2 = new LightSource();
     private float width = 1;
 
     public ScoringDoraView(ArrayList<Tile> tile_list, int front_tiles, int back_tiles)
@@ -29,13 +27,13 @@ public class ScoringDoraView : View3D
 
         Options options = new Options.from_disk();
 
-        string extension = Options.quality_enum_to_string(options.model_quality);
-        string texture_type = options.tile_textures;
-        float tile_scale = 1.55f;
+        //string extension = Options.quality_enum_to_string(options.model_quality);
+        //string texture_type = options.tile_textures;
 
-        RenderGeometry3D model = store.load_geometry_3D("tile_" + extension, false);
-        Vec3 tile_size = ((RenderBody3D)model.geometry[0]).model.size;
-        tile_size = Vec3(tile_size.x, tile_size.y + ((RenderBody3D)model.geometry[1]).model.size.y, tile_size.z).mul_scalar(tile_scale);
+        RenderTile size_tile = new RenderTile();
+        world.add_object(size_tile);
+        Vec3 tile_size = size_tile.obb;
+        world.remove_object(size_tile);
 
         width = (tile_list.size + front_tiles + back_tiles) * tile_size.x;
         float p = (tile_size.x - width) / 2;
@@ -44,7 +42,8 @@ public class ScoringDoraView : View3D
         {
             bool revealed = i >= front_tiles && i < front_tiles + tile_list.size && tile_list[i - front_tiles].tile_type != TileType.BLANK;
             Tile t = revealed ? tile_list[i - front_tiles] : new Tile(-1, TileType.BLANK, false);
-            RenderTile tile = new RenderTile(store, extension, texture_type, t, tile_scale);
+            RenderTile tile = new RenderTile();
+            world.add_object(tile);
             tiles.add(tile);
 
             tile.set_absolute_location(Vec3(p, 0, 0), new Quat.from_euler(revealed ? 0 : 1, 1, 0));
@@ -54,12 +53,20 @@ public class ScoringDoraView : View3D
         }
 
         float len = 15;
-        camera.focal_length = 0.03f;
 
         Vec3 pos = Vec3(0, len, len);
+
+        WorldObject target = new WorldObject();
+        world.add_object(target);
+        WorldCamera camera = new TargetWorldCamera(target);
+        world.add_object(camera);
+        world.active_camera = camera;
         camera.position = pos;
-        camera.pitch = -0.25f;
-        camera.roll = 0;
+
+        WorldLight light1 = new WorldLight();
+        WorldLight light2 = new WorldLight();
+        world.add_object(light1);
+        world.add_object(light2);
 
         light1.color = Color.white();
         light1.position = Vec3(len, len * 2, -len);
@@ -67,20 +74,6 @@ public class ScoringDoraView : View3D
         light2.color = Color.white();
         light2.position = Vec3(-len, len * 2, -len);
         light2.intensity = 15;
-    }
-
-    public override void do_render_3D(RenderState state)
-    {
-        RenderScene3D scene = new RenderScene3D(state.screen_size, 1.31f * width, rect);
-
-        scene.set_camera(camera);
-        scene.add_light_source(light1);
-        scene.add_light_source(light2);
-
-        for (int i = 0; i < tiles.size; i++)
-            tiles[i].render(scene);
-
-        state.add_scene(scene);
     }
 
     public float alpha

@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 using GameServer;
 
@@ -177,7 +178,7 @@ class ServerMenuView : MenuSubView
     {
     }
 
-    protected override void do_process(DeltaArgs delta)
+    protected override void process(DeltaArgs delta)
     {
         if (connection == null)
             return;

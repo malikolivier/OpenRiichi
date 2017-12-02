@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 class ServerSettingsView : MenuSubView
@@ -75,7 +76,7 @@ class ServerSettingsView : MenuSubView
             log_button.enabled = log_control;
     }
 
-    public override void do_render(RenderState state, RenderScene2D scene)
+    public override void render(RenderState state, RenderScene2D scene)
     {
         state.back_color = Color.black();
     }

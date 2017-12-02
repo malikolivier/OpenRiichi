@@ -1,3 +1,5 @@
+using Engine;
+
 class GameController : Object
 {
     private GameState game;
@@ -29,7 +31,7 @@ class GameController : Object
 
         this.options = options;
         string quality = Options.quality_enum_to_string(options.shader_quality);
-        parent_view.window.renderer.shader_3D = "open_gl_shader_3D_" + quality;
+        //parent_view.window.renderer.shader_3D = "open_gl_shader_3D_" + quality;
 
         game = new GameState(start_info, settings);
     }
@@ -91,7 +93,7 @@ class GameController : Object
         renderer.load_options(options);
 
         string quality = Options.quality_enum_to_string(options.shader_quality);
-        parent_view.window.renderer.shader_3D = "open_gl_shader_3D_" + quality;
+        //parent_view.window.renderer.shader_3D = "open_gl_shader_3D_" + quality;
     }
 
     private void create_round_state(RoundStartInfo round_start)
@@ -158,7 +160,7 @@ class GameController : Object
         menu = new GameMenuView(settings, index, start_info.timings);
         menu.score_finished.connect(menu_score_finished);
 
-        renderer = new GameRenderView(info, player_index, game.round_wind, game.dealer_index, options, game.score, start_info.timings);
+        renderer = new GameRenderView(info, player_index, game.dealer_index, options, game.score, start_info.timings);
         parent_view.add_child(renderer);
         parent_view.add_child(menu);
 

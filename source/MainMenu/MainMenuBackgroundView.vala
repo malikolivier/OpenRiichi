@@ -1,3 +1,5 @@
+using Engine;
+
 class MainMenuBackgroundView : View2D
 {
     private TileMenuView tile_view;
@@ -5,7 +7,8 @@ class MainMenuBackgroundView : View2D
 
     public MainMenuBackgroundView(string tile_textures, Color tile_fore_color, Color tile_back_color)
     {
-        tile_view = new TileMenuView(tile_textures, tile_fore_color, tile_back_color);
+        // tile_textures, tile_fore_color, tile_back_color
+        tile_view = new TileMenuView();
     }
 
     public override void added()
@@ -28,7 +31,7 @@ class MainMenuBackgroundView : View2D
     }
 }
 
-class MainMenuBackgroundImageView : ResetContainer
+class MainMenuBackgroundImageView : View2D
 {
     public override void added()
     {

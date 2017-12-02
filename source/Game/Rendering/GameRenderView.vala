@@ -1,30 +1,28 @@
-using GL;
+using Engine;
 using Gee;
 
 public class GameRenderView : View3D, IGameRenderer
 {
-    private RenderTile[] tiles;
-    private RenderPlayer[] players;
+    private RenderTile[] tiles { get { return scene.tiles; } }
+    private RenderPlayer[] players { get { return scene.players; } }
 
-    private RenderSceneManager scene;
+    private GameScene scene;
     private RenderTile? mouse_down_tile;
     private ArrayList<TileSelectionGroup>? select_groups = null;
 
     private Sound hover_sound;
 
     private RoundStartInfo info;
-    private int player_index;
-    private Wind round_wind;
+    private int observer_index;
     private int dealer_index;
     private Options options;
     private RoundScoreState score;
     private AnimationTimings timings;
 
-    public GameRenderView(RoundStartInfo info, int player_index, Wind round_wind, int dealer_index, Options options, RoundScoreState score, AnimationTimings timings)
+    public GameRenderView(RoundStartInfo info, int observer_index, int dealer_index, Options options, RoundScoreState score, AnimationTimings timings)
     {
         this.info = info;
-        this.player_index = player_index;
-        this.round_wind = round_wind;
+        this.observer_index = observer_index;
         this.dealer_index = dealer_index;
         this.options = options;
         this.score = score;
@@ -33,18 +31,42 @@ public class GameRenderView : View3D, IGameRenderer
 
     public override void added()
     {
-        scene = new RenderSceneManager(options, player_index, round_wind, dealer_index, info.wall_index, store.audio_player, score, timings);
+        scene = new GameScene(options, observer_index, dealer_index, info.wall_index, store.audio_player, score, timings);
 
-        scene.added(store);
-        tiles = scene.tiles;
-        players = scene.players;
+        WorldLight light1 = new WorldLight();
+        WorldLight light2 = new WorldLight();
+        world.add_object(light1);
+        world.add_object(light2);
 
-        hover_sound = store.audio_player.load_sound("mouse_over");
+        light1.intensity = 20;
+        light2.intensity = 4;
+        light1.position = Vec3(0, 20, 0);
+        light2.position = Vec3(0, 20, 0);
+        
+        world.add_object(scene);
+
+        WorldObject target = new WorldObject();
+        world.add_object(target);
+        target.position = Vec3(0, -5, 0);
+
+        WorldCamera camera = new TargetWorldCamera(target);
+        scene.players[observer_index != -1 ? observer_index : 0].add_object(camera);
+        world.active_camera = camera;
+        camera.position = Vec3(0, 10, 10);
 
         buffer_action(new RenderActionDelay(new AnimationTime.preset(0.5f)));
         buffer_action(new RenderActionSplitDeadWall(timings.split_wall));
 
+        hover_sound = store.audio_player.load_sound("mouse_over");
+
         int index = dealer_index;
+
+        foreach (RenderTile tile in scene.tiles)
+        {
+            tile.on_mouse_over.connect(tile_hover);
+            tile.on_focus_lost.connect(tile_unhover);
+        }
+        world.do_picking = true;
 
         for (int i = 0; i < 3; i++)
         {
@@ -64,19 +86,9 @@ public class GameRenderView : View3D, IGameRenderer
         buffer_action(new RenderActionFlipDora());
     }
 
-    public override void do_process(DeltaArgs delta)
-    {
-        scene.process(delta);
-    }
-
-    public override void do_render_3D(RenderState state)
-    {
-        scene.render(state);
-    }
-
     public void load_options(Options options)
     {
-        scene.load_options(store, options);
+        scene.load_options(options);
     }
 
     private void game_finished(RoundFinishResult results)
@@ -149,7 +161,9 @@ public class GameRenderView : View3D, IGameRenderer
 
     private void tile_assignment(Tile tile)
     {
-        tiles[tile.ID].assign_type(tile, store);
+        RenderTile t = tiles[tile.ID];
+        t.tile_type = tile;
+        t.reload();
     }
 
     private void tile_draw(int player_index)
@@ -263,11 +277,28 @@ public class GameRenderView : View3D, IGameRenderer
         scene.add_action(action);
     }
 
-    protected override void do_mouse_move(MouseMoveArgs mouse)
+    private RenderTile? hover_tile = null;
+    private void tile_hover(WorldObject obj)
     {
+        RenderTile tile = obj as RenderTile;
+        tile.hovered = true;
+        hover_tile = tile;
+    }
+
+    private void tile_unhover(WorldObject obj)
+    {
+        RenderTile tile = obj as RenderTile;
+        tile.hovered = false;
+        hover_tile = null;
+    }
+
+    protected override void mouse_move(MouseMoveArgs mouse)
+    {
+        base.mouse_move(mouse);
+
         RenderTile? tile = null;
         if (!mouse.handled && scene.active)
-            tile = get_hover_tile(scene.camera, scene.observer.hand_tiles, mouse.position);
+            tile = hover_tile;
 
         bool hovered = false;
 
@@ -328,7 +359,7 @@ public class GameRenderView : View3D, IGameRenderer
         return null;
     }
 
-    protected override void do_mouse_event(MouseEventArgs mouse)
+    protected override void mouse_event(MouseEventArgs mouse)
     {
         if (mouse.handled || !scene.active)
         {
@@ -338,7 +369,7 @@ public class GameRenderView : View3D, IGameRenderer
 
         if (mouse.button == MouseEventArgs.Button.LEFT)
         {
-            RenderTile? tile = get_hover_tile(scene.camera, scene.observer.hand_tiles, mouse.position);
+            RenderTile? tile = hover_tile;
 
             if (mouse.down)
             {
@@ -360,38 +391,9 @@ public class GameRenderView : View3D, IGameRenderer
         }
     }
 
-    private RenderTile? get_hover_tile(Camera camera, ArrayList<RenderTile> tiles, Vec2i position)
-    {
-        Size2 size = Size2(parent_window.size.width, parent_window.size.height);
-        float aspect_ratio = size.width / size.height;
-        float focal_length = camera.focal_length;
-
-        Mat4 projection_matrix = parent_window.renderer.get_projection_matrix(focal_length, aspect_ratio);
-        Mat4 view_matrix = camera.get_view_transform();
-        Vec3 ray = Calculations.get_ray(projection_matrix, view_matrix, position, Size2i((int)size.width, (int)size.height));
-
-        float shortest = 0;
-        RenderTile? shortest_tile = null;
-
-        for (int i = 0; i < tiles.size; i++)
-        {
-            RenderTile tile = tiles.get(i);
-            float collision_distance = Calculations.get_collision_distance(camera.position, ray, tile.model_size.mul_scalar(1.0f), tile.tile.transform);
-
-            if (collision_distance >= 0)
-                if (shortest_tile == null || collision_distance < shortest)
-                {
-                    shortest = collision_distance;
-                    shortest_tile = tile;
-                }
-        }
-
-        return shortest_tile;
-    }
-
     public void set_tile_select_groups(ArrayList<TileSelectionGroup>? groups)
     {
-        foreach (RenderTile tile in tiles)
+        foreach (RenderTile tile in scene.tiles)
             tile.indicated = false;
 
         select_groups = groups;

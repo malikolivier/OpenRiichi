@@ -1,12 +1,6 @@
-rsc/archive/*
-rsc/anchive
+.vscode
 bin/OpenRiichi*
+bin/libengine*
 *.c
 *.o
-*.exe
-*.rar
 *.DS_Store
-*.swp
-*.blend1
-*.layout
-*.depend

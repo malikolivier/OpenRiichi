@@ -1,10 +1,10 @@
+using Engine;
 using Gee;
 
-class RenderSceneManager : Object
+class GameScene : WorldObject
 {
     private Options options;
-    private int player_index;
-    private Wind round_wind;
+    private int observer_index;
     private int dealer;
     private int wall_index;
     private RoundScoreState score;
@@ -23,11 +23,8 @@ class RenderSceneManager : Object
     private Sound chii_sound;
     private Sound reveal_sound;
 
-    private float table_length;
-    private Vec3 center;
-    private Vec3 tile_size;
-    private LightSource light1 = new LightSource();
-    private LightSource light2 = new LightSource();
+    //private float table_length;
+    //private Vec3 tile_size;
 
     private RenderTable table;
 
@@ -36,23 +33,18 @@ class RenderSceneManager : Object
     private RenderAction? current_action = null;
     private float action_start_time;
 
-    public RenderSceneManager(Options options, int player_index, Wind round_wind, int dealer, int wall_index, AudioPlayer audio, RoundScoreState score, AnimationTimings timings)
+    public GameScene(Options options, int observer_index, int dealer, int wall_index, AudioPlayer audio, RoundScoreState score, AnimationTimings timings)
     {
         this.options = options;
-        this.player_index = player_index;
-        this.round_wind = round_wind;
+        this.observer_index = observer_index;
         this.dealer = dealer;
         this.wall_index = wall_index;
         this.audio = audio;
         this.score = score;
         this.timings = timings;
-
-        players = new RenderPlayer[4];
-        tiles = new RenderTile[136];
-        camera = new Camera();
     }
 
-    public void added(ResourceStore store)
+    public override void added()
     {
         slide_sound = audio.load_sound("slide");
         flip_sound = audio.load_sound("flip");
@@ -66,56 +58,51 @@ class RenderSceneManager : Object
         chii_sound = audio.load_sound("chii");
         reveal_sound = audio.load_sound("reveal");
 
-        int index = player_index == -1 ? 0 : player_index;
+        //int index = player_index == -1 ? 0 : player_index;
 
-        float tile_scale = 1.74f;
+        //float tile_scale = 1.74f;
         string extension = Options.quality_enum_to_string(options.model_quality);
 
-        RenderGeometry3D tile = store.load_geometry_3D("tile_" + extension, false);
-        tile_size = ((RenderBody3D)tile.geometry[0]).model.size;
-        tile_size = Vec3(tile_size.x, tile_size.y + ((RenderBody3D)tile.geometry[1]).model.size.y, tile_size.z).mul_scalar(tile_scale);
+        //table = new RenderTable(extension, tile_size, round_wind, -(float)index / 2, score);
+        //add_object(table);
 
-        table = new RenderTable(store, extension, tile_size, round_wind, -(float)index / 2, score);
-
-        table_length = table.player_offset;
-        center = table.center;
+        /*table_length = table.player_offset;
         float wall_offset = (tile_size.x * 19 + tile_size.z) / 2;
 
         for (int i = 0; i < tiles.length; i++)
         {
-            RenderTile t = new RenderTile(store, extension, options.tile_textures, new Tile(i, TileType.BLANK, false), tile_scale);
+            RenderTile t = new RenderTile();
+            add_object(t);
+            t.tile_type = new Tile(i, TileType.BLANK, false);
             t.front_color = options.tile_fore_color;
             t.back_color = options.tile_back_color;
             tiles[i] = t;
         }
 
-        wall = new RenderWall(tiles, tile_size, center, wall_offset, dealer, wall_index);
+        wall = new RenderWall(tiles, tile_size, wall_offset, dealer, wall_index);
+        add_object(wall);
 
         for (int i = 0; i < players.length; i++)
-            players[i] = new RenderPlayer(store, center, i == dealer, i, table_length, wall_offset, tile_size, i == index, round_wind);
+        {
+            players[i] = new RenderPlayer(i, i == dealer, table_length, wall_offset, tile_size, i == index, round_wind);
+            add_object(players[i]);
+        }
 
         observer = players[index];
 
-
-        float camera_height = center.y + table_length * 1.8f;
+        float camera_height = table_length * 1.8f;
         float camera_dist = table_length * 1.0f;
-        camera.pitch = -0.366f;
-        camera.focal_length = 0.77f;
 
-        Vec3 pos = Vec3(0, camera_height, camera_dist);
-        pos = Calculations.rotate_y({}, (float)observer.seat / 2, pos);
-        camera.position = pos;
-        camera.yaw = (float)observer.seat / 2;
+        WorldCamera camera = new TargetWorldCamera(table);
+        table.add_object(camera);
+        camera.position = Vec3(0, camera_height, camera_dist);
+        //camera.yaw = (float)observer.seat / 2;*/
 
-        light1.color = Color.white();
-        light1.intensity = 20;
-        light2.color = Color.white();
-        light2.intensity = 4;
-
-        position_lights((float)observer.seat / 2);
+        table = new RenderTable(extension, observer_index, dealer, Vec3(0, 0, 0), wall_index, 0, score);
+        add_object(table);
     }
 
-    public void load_options(ResourceStore store, Options options)
+    public void load_options(Options options)
     {
         this.options = options;
 
@@ -123,22 +110,16 @@ class RenderSceneManager : Object
 
         foreach (RenderTile tile in tiles)
         {
-            tile.reload(store, extension, options.tile_textures);
+            // extension, options.tile_textures
+            tile.reload();
             tile.front_color = options.tile_fore_color;
             tile.back_color = options.tile_back_color;
         }
-        table.reload(store, extension);
+        table.reload(extension);
     }
 
-    public void process(DeltaArgs delta)
+    public override void process(DeltaArgs delta)
     {
-        for (int i = 0; i < tiles.length; i++)
-            tiles[i].process(delta);
-
-        for (int i = 0; i < players.length; i++)
-            players[i].process(delta);
-
-
         if (current_action != null &&
             delta.time - action_start_time > current_action.time.total())
             current_action = null;
@@ -157,25 +138,6 @@ class RenderSceneManager : Object
                 }
             }
         }
-    }
-
-    public void render(RenderState state)
-    {
-        RenderScene3D scene = new RenderScene3D(state.screen_size, 1, Rectangle(0, 0, state.screen_size.width, state.screen_size.height));
-
-        scene.set_camera(camera);
-        scene.add_light_source(light1);
-        scene.add_light_source(light2);
-
-        table.render(scene);
-
-        for (int i = 0; i < tiles.length; i++)
-            tiles[i].render(scene);
-
-        for (int i = 0; i < players.length; i++)
-            players[i].render(scene);
-
-        state.add_scene(scene);
     }
 
     public void add_action(RenderAction action)
@@ -229,22 +191,22 @@ class RenderSceneManager : Object
     private void action_split_dead_wall(RenderActionSplitDeadWall action)
     {
         slide_sound.play();
-        wall.split_dead_wall(action.time);
+        table.split_dead_wall();//action.time);
     }
 
     private void action_initial_draw(RenderActionInitialDraw action)
     {
         draw_sound.play();
         for (int i = 0; i < action.tiles; i++)
-            action.player.draw_tile(wall.draw_wall(action.time));
+            action.player.draw_tile(wall.draw_wall());//action.time));
     }
 
     private void action_draw(RenderActionDraw action)
     {
         draw_sound.play();
-        action.player.draw_tile(wall.draw_wall(action.time));
+        action.player.draw_tile(wall.draw_wall());//action.time));
 
-        if (action.player.seat == player_index)
+        if (action.player.seat == observer_index)
             active = true;
     }
 
@@ -253,16 +215,16 @@ class RenderSceneManager : Object
         wall.flip_dora();
         wall.dead_tile_add();
         draw_sound.play();
-        action.player.draw_tile(wall.draw_dead_wall(action.time));
+        action.player.draw_tile(wall.draw_dead_wall());//action.time));
 
-        if (action.player.seat == player_index)
+        if (action.player.seat == observer_index)
             active = true;
     }
 
     private void action_discard(RenderActionDiscard action)
     {
         discard_sound.play();
-        action.player.discard(action.tile, action.time);
+        action.player.discard(action.tile);//, action.time);
     }
 
     private void action_ron(RenderActionRon action)
@@ -270,7 +232,7 @@ class RenderSceneManager : Object
         ron_sound.play();
 
         if (action.winners.length == 1 && action.tile != null)
-            action.winners[0].ron(action.tile, action.time);
+            action.winners[0].ron(action.tile);//, action.time);
 
         bool flip_ura_dora = false;
 
@@ -292,7 +254,7 @@ class RenderSceneManager : Object
     private void action_tsumo(RenderActionTsumo action)
     {
         tsumo_sound.play();
-        action.player.tsumo(action.time);
+        action.player.tsumo();//action.time);
 
         if (!action.player.open)
             add_action(new RenderActionHandReveal(timings.hand_reveal, action.player));
@@ -307,12 +269,12 @@ class RenderSceneManager : Object
         if (action.open)
             reveal_sound.play();
 
-        action.player.riichi(action.open, action.time);
+        action.player.riichi(action.open);//, action.time);
     }
 
     private void action_return_riichi(RenderActionReturnRiichi action)
     {
-        action.player.return_riichi();
+        action.player.return_riichi(action.time);
     }
 
     private void action_late_kan(RenderActionLateKan action)
@@ -330,7 +292,7 @@ class RenderSceneManager : Object
     private void action_open_kan(RenderActionOpenKan action)
     {
         action.discarder.rob_tile(action.tile);
-        action.player.open_kan(action.discarder, action.tile, action.tile_1, action.tile_2, action.tile_3, action.time);
+        action.player.open_kan(action.discarder, action.tile, action.tile_1, action.tile_2, action.tile_3);//, action.time);
         kan_sound.play();
     }
 
@@ -338,9 +300,9 @@ class RenderSceneManager : Object
     {
         pon_sound.play();
         action.discarder.rob_tile(action.tile);
-        action.player.pon(action.discarder, action.tile, action.tile_1, action.tile_2, action.time);
+        action.player.pon(action.discarder, action.tile, action.tile_1, action.tile_2);//, action.time);
 
-        if (action.player.seat == player_index)
+        if (action.player.seat == observer_index)
             active = true;
     }
 
@@ -348,9 +310,9 @@ class RenderSceneManager : Object
     {
         chii_sound.play();
         action.discarder.rob_tile(action.tile);
-        action.player.chii(action.discarder, action.tile, action.tile_1, action.tile_2, action.time);
+        action.player.chii(action.tile, action.tile_1, action.tile_2, action.time);
 
-        if (action.player.seat == player_index)
+        if (action.player.seat == observer_index)
             active = true;
     }
 
@@ -364,13 +326,13 @@ class RenderSceneManager : Object
             {
                 if (!player.open)
                 {
-                    player.open_hand(action.time);
+                    player.open_hand();//action.time);
                     revealed = true;
                 }
             }
             else if (player != observer && action.draw_type != GameDrawType.VOID_HAND)
             {
-                player.close_hand(action.time);
+                player.close_hand();//action.time);
                 revealed = true;
             }
         }
@@ -382,7 +344,7 @@ class RenderSceneManager : Object
     private void action_hand_reveal(RenderActionHandReveal action)
     {
         reveal_sound.play();
-        action.player.open_hand(action.time);
+        action.player.open_hand();//action.time);
     }
 
     private void action_flip_dora(RenderActionFlipDora action)
@@ -402,7 +364,7 @@ class RenderSceneManager : Object
         active = action.active;
     }
 
-    private void position_lights(float rotation)
+    /*private void position_lights(float rotation)
     {
         Vec3 pos;
 
@@ -413,11 +375,11 @@ class RenderSceneManager : Object
         pos = Vec3(0, 50, table_length);
         pos = Calculations.rotate_y(Vec3.empty(), rotation, pos);
         light2.position = pos;
-    }
+    }*/
 
-    public RenderPlayer[] players { get; private set; }
-    public RenderTile[] tiles { get; private set; }
-    public RenderWall wall { get; private set; }
+    public RenderPlayer[] players { get { return table.players; } }
+    public RenderTile[] tiles { get { return table.tiles; } }
+    public RenderWall wall { get { return table.wall; } }
     public RenderPlayer observer { get; private set; }
     public Camera camera { get; private set; }
     public bool active { get; set; }

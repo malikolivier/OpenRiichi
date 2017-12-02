@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 using GameServer;
 
@@ -36,7 +37,7 @@ class JoinMenuView : MenuSubView
         name_text.text_changed.connect(name_changed);
     }
 
-    protected override void do_process(DeltaArgs delta)
+    protected override void process(DeltaArgs delta)
     {
         if (!connecting)
             return;
@@ -114,7 +115,7 @@ class JoinMenuView : MenuSubView
         string host = server_text.text;
         player_name = name_text.text;
 
-        ref();
+        //ref();
         Threading.start2(try_join, new Obj<string>(host), new Obj<string>(player_name));
     }
 
@@ -140,7 +141,7 @@ class JoinMenuView : MenuSubView
             connection.send_message(new ClientMessageAuthenticate(name, Environment.version_info));
         }
 
-        unref();
+        //unref();
     }
 
     /*private void received_message()

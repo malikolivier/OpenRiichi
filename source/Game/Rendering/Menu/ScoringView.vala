@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 class ScoringView : View2D
@@ -29,10 +30,8 @@ class ScoringView : View2D
 
     public override void added()
     {
-        ResetContainer reset = new ResetContainer();
-        add_child(reset);
         rectangle = new RectangleControl();
-        reset.add_child(rectangle);
+        add_child(rectangle);
         rectangle.resize_style = ResizeStyle.RELATIVE;
         rectangle.color = Color.with_alpha(0.7f);
         rectangle.selectable = true;
@@ -84,7 +83,7 @@ class ScoringView : View2D
         visible = false;
     }
 
-    protected override void do_process(DeltaArgs delta)
+    protected override void process(DeltaArgs delta)
     {
         if (start_time == 0)
             start_time = delta.time;

@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 class GameMenuView : View2D
@@ -154,7 +155,7 @@ class GameMenuView : View2D
         }
     }
 
-    protected override void do_key_press(KeyArgs key)
+    protected override void key_press(KeyArgs key)
     {
         if (key.handled)
             return;
@@ -280,7 +281,7 @@ class GameMenuView : View2D
         score_finished();
     }
 
-    protected override void do_process(DeltaArgs delta)
+    protected override void process(DeltaArgs delta)
     {
         if (start_time == 0)
             start_time = delta.time;

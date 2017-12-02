@@ -1,3 +1,4 @@
+using Engine;
 using Gee;
 
 class ScoringInnerView : View2D
@@ -60,9 +61,10 @@ class ScoringInnerView : View2D
         left.inner_anchor = Vec2(0, 0.5f);
         left.outer_anchor = Vec2(0, 0.5f);
         left.animation_finished.connect(player_element_animation_finished);
-
-        riichi_view = new ScoringStickNumberView("1000", true);
+        
+        riichi_view = new ScoringStickNumberView(RenderStick.StickType.STICK_1000, true);
         add_child(riichi_view);
+        riichi_view.resize_style = ResizeStyle.ABSOLUTE;
         riichi_view.size = Size2(200, 20);
         riichi_view.inner_anchor = Vec2(0, 0);
         riichi_view.outer_anchor = Vec2(0, 0);
@@ -70,8 +72,9 @@ class ScoringInnerView : View2D
         riichi_view.number = score.riichi_count;
         riichi_view.alpha = animate ? 0 : 1;
 
-        renchan_view = new ScoringStickNumberView("100", false);
+        renchan_view = new ScoringStickNumberView(RenderStick.StickType.STICK_100, false);
         add_child(renchan_view);
+        renchan_view.resize_style = ResizeStyle.ABSOLUTE;
         renchan_view.size = riichi_view.size;
         renchan_view.inner_anchor = Vec2(1, 0);
         renchan_view.outer_anchor = Vec2(1, 0);
