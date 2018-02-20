@@ -22,7 +22,7 @@ public class GameRenderView : View3D, IGameRenderer
     public GameRenderView(RoundStartInfo info, int observer_index, int dealer_index, Options options, RoundScoreState score, AnimationTimings timings)
     {
         this.info = info;
-        this.observer_index = observer_index;
+        this.observer_index = observer_index != -1 ? observer_index : 0;
         this.dealer_index = dealer_index;
         this.options = options;
         this.score = score;
@@ -32,34 +32,40 @@ public class GameRenderView : View3D, IGameRenderer
     public override void added()
     {
         scene = new GameScene(options, observer_index, dealer_index, info.wall_index, store.audio_player, score, timings);
+        world.add_object(scene);
+
+        var observer = scene.players[observer_index];
+        observe_object = new WorldObject();
+        observer.add_object(observe_object);
 
         WorldLight light1 = new WorldLight();
         WorldLight light2 = new WorldLight();
-        world.add_object(light1);
-        world.add_object(light2);
+        WorldLight light3 = new WorldLight();
+        observe_object.add_object(light1);
+        observe_object.add_object(light2);
+        observe_object.add_object(light3);
 
-        light1.intensity = 20;
-        light2.intensity = 4;
-        light1.position = Vec3(0, 20, 0);
-        light2.position = Vec3(0, 20, 0);
-        
-        world.add_object(scene);
+        light1.intensity = 12;
+        light2.intensity = 8;
+        light3.intensity = 8;
+        light1.position = Vec3(  0, 20,  10);
+        light2.position = Vec3( 15, 10, -10);
+        light3.position = Vec3(-15, 10, -10);
 
-        WorldObject target = new WorldObject();
-        world.add_object(target);
-        target.position = Vec3(0, -5, 0);
+        target = new WorldObject();
+        observe_object.add_object(target);
+        target.position = Vec3(0, -4, 0);
 
-        WorldCamera camera = new TargetWorldCamera(target);
-        scene.players[observer_index != -1 ? observer_index : 0].add_object(camera);
+        camera = new TargetWorldCamera(target);
+        observe_object.add_object(camera);
         world.active_camera = camera;
-        camera.position = Vec3(0, 10, 10);
+        camera.position = Vec3(0, 16, 10);
+        camera.view_angle = 80;
 
         buffer_action(new RenderActionDelay(new AnimationTime.preset(0.5f)));
         buffer_action(new RenderActionSplitDeadWall(timings.split_wall));
 
         hover_sound = store.audio_player.load_sound("mouse_over");
-
-        int index = dealer_index;
 
         foreach (RenderTile tile in scene.tiles)
         {
@@ -68,27 +74,83 @@ public class GameRenderView : View3D, IGameRenderer
         }
         world.do_picking = true;
 
-        for (int i = 0; i < 3; i++)
-        {
-            for (int p = 0; p < 4; p++)
-            {
-                buffer_action(new RenderActionInitialDraw(timings.initial_draw, players[index % 4], 4));
-                index++;
-            }
-        }
-
-        for (int p = 0; p < 4; p++)
-        {
-            buffer_action(new RenderActionInitialDraw(timings.initial_draw, players[index % 4], 1));
-            index++;
-        }
+        for (int i = 0; i < 16; i++)
+            buffer_action(new RenderActionInitialDraw(timings.initial_draw, players[(i + dealer_index) % 4], i < 12 ? 4 : 1));
 
         buffer_action(new RenderActionFlipDora());
+    }
+
+    WorldCamera camera;
+    WorldObject target;
+    WorldObject observe_object;
+
+    protected override void key_press(KeyArgs key)
+    {
+        if (key.keycode == KeyCode.NUM_1)
+        {
+            camera.position = camera.position.plus(Vec3(0, 0.1f, 0));
+            Environment.log(LogType.DEBUG, "GameRenderView", "Camera height: " + camera.position.y.to_string());
+        }
+        else if (key.keycode == KeyCode.NUM_2)
+        {
+            camera.position = camera.position.plus(Vec3(0, -0.1f, 0));
+            Environment.log(LogType.DEBUG, "GameRenderView", "Camera height: " + camera.position.y.to_string());
+        }
+        else if (key.keycode == KeyCode.NUM_3)
+        {
+            target.position = target.position.plus(Vec3(0, 0.1f, 0));
+            Environment.log(LogType.DEBUG, "GameRenderView", "Target height: " + target.position.y.to_string());
+        }
+        else if (key.keycode == KeyCode.NUM_4)
+        {
+            target.position = target.position.plus(Vec3(0, -0.1f, 0));
+            Environment.log(LogType.DEBUG, "GameRenderView", "Target height: " + target.position.y.to_string());
+        }
+        if (key.keycode == KeyCode.NUM_5)
+        {
+            camera.view_angle += 0.5f;
+            Environment.log(LogType.DEBUG, "GameRenderView", "Camera fov: " + camera.view_angle.to_string());
+        }
+        else if (key.keycode == KeyCode.NUM_6)
+        {
+            camera.view_angle -= 0.5f;
+            Environment.log(LogType.DEBUG, "GameRenderView", "Camera fov: " + camera.view_angle.to_string());
+        }
     }
 
     public void load_options(Options options)
     {
         scene.load_options(options);
+    }
+
+    public void observe_next()
+    {
+        observer_index = (observer_index + 1) % 4;
+        observe_animate();
+    }
+
+    public void observe_prev()
+    {
+        observer_index = (observer_index + 3) % 4;
+        observe_animate();
+    }
+
+    private void observe_animate()
+    {
+        var observer = scene.players[observer_index];
+        observer.convert_object(observe_object);
+
+        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(2));
+        PathQuat rot = new LinearPathQuat(Quat());
+        animation.do_absolute_rotation(rot);
+
+        animation.curve = new SCurve(0.5f);
+        
+        observe_object.cancel_buffered_animations();
+        observe_object.animate(animation, true);
+
+        foreach (var player in players)
+            player.set_observed( player == observer);
     }
 
     private void game_finished(RoundFinishResult results)
@@ -170,11 +232,6 @@ public class GameRenderView : View3D, IGameRenderer
     {
         RenderPlayer player = players[player_index];
         buffer_action(new RenderActionDraw(timings.tile_draw, player));
-
-        /*if (tile_draw.dead_wall)
-            player.draw_tile(scene.wall.draw_dead_wall());
-        else
-            player.draw_tile(scene.wall.draw_wall());*/
     }
 
     public void dead_tile_draw(int player_index)
@@ -194,11 +251,6 @@ public class GameRenderView : View3D, IGameRenderer
     {
         scene.wall.flip_dora();
     }
-
-    /*private void server_dead_tile_add()
-    {
-        scene.wall.dead_tile_add();
-    }*/
 
     private void riichi(int player_index, bool open)
     {
@@ -266,8 +318,11 @@ public class GameRenderView : View3D, IGameRenderer
             scene.active = active;
 
         if (!active)
+        {
+            select_groups = null;
             foreach (RenderTile tile in tiles)
                 tile.indicated = false;
+        }
     }
 
     /////////////////////
@@ -280,67 +335,34 @@ public class GameRenderView : View3D, IGameRenderer
     private RenderTile? hover_tile = null;
     private void tile_hover(WorldObject obj)
     {
-        RenderTile tile = obj as RenderTile;
-        tile.hovered = true;
-        hover_tile = tile;
+        hover_tile = obj as RenderTile;
     }
 
     private void tile_unhover(WorldObject obj)
     {
-        RenderTile tile = obj as RenderTile;
-        tile.hovered = false;
+        (obj as RenderTile).hovered = false;
         hover_tile = null;
+
+        //if (scene.active)
+            foreach (var tile in tiles)
+                tile.indicated = false;
     }
 
     protected override void mouse_move(MouseMoveArgs mouse)
     {
         base.mouse_move(mouse);
 
-        RenderTile? tile = null;
-        if (!mouse.handled && scene.active)
-            tile = hover_tile;
+        RenderTile? tile = scene.active ? hover_tile : null;
+        TileSelectionGroup? group = get_tile_selection_group(tile);
 
-        bool hovered = false;
-
-        if (tile != null)
+        if (group != null)
         {
-            if (select_groups == null)
-            {
-                if (!tile.hovered)
-                    hover_sound.play();
+            if (!tile.hovered)
+                hover_sound.play();
+            foreach (Tile t in group.highlight_tiles)
+                tiles[t.ID].indicated = true;
 
-                foreach (RenderTile t in tiles)
-                    t.hovered = false;
-
-                tile.hovered = true;
-                hovered = true;
-            }
-            else
-            {
-                TileSelectionGroup? group = get_tile_selection_group(tile);
-
-                if (group != null)
-                {
-                    if (!tile.hovered)
-                        hover_sound.play();
-                    foreach (RenderTile t in tiles)
-                        t.hovered = false;
-                    foreach (Tile t in group.highlight_tiles)
-                        tiles[t.ID].hovered = true;
-
-                    hovered = true;
-                }
-                else
-                    foreach (RenderTile t in tiles)
-                        t.hovered = false;
-            }
-        }
-        else
-            foreach (RenderTile t in tiles)
-                t.hovered = false;
-
-        if (hovered)
-        {
+            tile.hovered = true;
             mouse.cursor_type = CursorType.HOVER;
             mouse.handled = true;
         }
@@ -369,20 +391,12 @@ public class GameRenderView : View3D, IGameRenderer
 
         if (mouse.button == MouseEventArgs.Button.LEFT)
         {
-            RenderTile? tile = hover_tile;
+            RenderTile? tile = get_tile_selection_group(hover_tile) == null ? null : hover_tile;
 
             if (mouse.down)
-            {
-                if (select_groups != null && get_tile_selection_group(tile) == null)
-                    tile = null;
-
                 mouse_down_tile = tile;
-            }
             else
             {
-                if (select_groups != null && get_tile_selection_group(tile) == null)
-                    tile = null;
-
                 if (tile != null && tile == mouse_down_tile)
                     tile_selected(tile.tile_type);
 
@@ -393,15 +407,15 @@ public class GameRenderView : View3D, IGameRenderer
 
     public void set_tile_select_groups(ArrayList<TileSelectionGroup>? groups)
     {
-        foreach (RenderTile tile in scene.tiles)
-            tile.indicated = false;
+        /*foreach (RenderTile tile in scene.tiles)
+            tile.indicated = false;*/
 
         select_groups = groups;
 
-        if (groups != null)
+        /*if (groups != null)
             foreach (TileSelectionGroup group in groups)
                 if (group.group_type != TileSelectionGroup.GroupType.DISCARD)
                     foreach (Tile tile in group.highlight_tiles)
-                        tiles[tile.ID].indicated = true;
+                        tiles[tile.ID].indicated = true;*/
     }
 }

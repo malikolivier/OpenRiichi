@@ -24,7 +24,6 @@ namespace GameServer
         public ServerController()
         {
             menu.game_start.connect(game_start);
-            //menu.game_start_event.connect(game_start_event);
         }
 
         ~ServerController()
@@ -103,6 +102,7 @@ namespace GameServer
                 observers = menu.players;
                 foreach (var player in menu.observers)
                     observers.add(player);
+                players = new ArrayList<ServerPlayer>();
 
                 log = menu.log;
                 settings = log.settings;

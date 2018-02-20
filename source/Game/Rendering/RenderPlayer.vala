@@ -3,28 +3,34 @@ using Gee;
 
 public class RenderPlayer : WorldObject
 {
+    private const float VIEW_ANGLE = 0.44f;
+
+    private bool dealer;
     private Vec3 tile_size;
     private float hand_offset;
     private Vec3 riichi_offset;
     private bool observed;
+    private Wind wind;
 
     private RenderHand hand;
     private RenderPond pond;
     private RenderCalls calls;
     private RenderStick render_riichi;
 
-    public RenderPlayer(int seat, bool dealer, float hand_offset, Vec3 riichi_offset, Vec3 tile_size, bool observed, Wind round_wind)
+    public RenderPlayer(int seat, bool dealer, float hand_offset, Vec3 riichi_offset, Vec3 tile_size, bool observed, Wind wind)
     {
+        this.dealer = dealer;
         this.hand_offset = hand_offset;
         this.riichi_offset = riichi_offset;
         this.seat = seat;
         this.tile_size = tile_size;
         this.observed = observed;
+        this.wind = wind;
     }
 
     protected override void added()
     {
-        hand = new RenderHand(tile_size, observed ? 0.44f : 0);
+        hand = new RenderHand(tile_size, observed ? VIEW_ANGLE : 0);
         add_object(hand);
         hand.position = Vec3(0, 0, hand_offset);
 
@@ -43,28 +49,12 @@ public class RenderPlayer : WorldObject
         render_riichi.visible = false;
         render_riichi.position = Vec3(0, 0, hand_offset);
 
-        /*if (dealer)
+        if (dealer)
         {
-            string wind_string;
-            if (round_wind == Wind.SOUTH)
-                wind_string = "South";
-            else if (round_wind == Wind.WEST)
-                wind_string = "West";
-            else if (round_wind == Wind.NORTH)
-                wind_string = "North";
-            else
-                wind_string = "East";
-
-            wind_indicator = store.load_geometry_3D("wind_indicator", false);
-            RenderObject3D body = ((RenderObject3D)wind_indicator.geometry[0]);
-            body.texture = store.load_texture("WindIndicators/" + wind_string);
-
-            pos = Vec3(this.player_offset - body.model.size.x / 2 - (tile_size.x * 2.5f + tile_size.z), 0, this.player_offset);
-            pos = Calculations.rotate_y(Vec3.empty(), (float)seat / 2, pos);
-            pos = center.plus(pos);
-            wind_indicator.position = Vec3(pos.x, pos.y + body.model.size.y / 2, pos.z);
-            wind_indicator.rotation = new Quat.from_euler_vec(Vec3(0, -(float)seat / 2, 0));
-        }*/
+            var indicator = new RenderWindIndicator(wind);
+            add_object(indicator);
+            indicator.position = Vec3(hand_offset - indicator.obb.x / 2 - tile_size.x * 3 - tile_size.z, indicator.obb.y / 2, hand_offset);
+        }
     }
 
     public void draw_tile(RenderTile tile)
@@ -85,29 +75,29 @@ public class RenderPlayer : WorldObject
 
     public void ron(RenderTile tile)
     {
-        //hand.ron(tile);
+        hand.ron(tile);
     }
 
     public void tsumo()
     {
-        //hand.tsumo();
+        hand.tsumo();
     }
 
     public void open_hand()
     {
-        //hand.open();
+        hand.open_hand();
     }
 
     public void close_hand()
     {
-        //hand.close();
+        hand.close_hand();
     }
 
     public void riichi(bool open)
     {
         render_riichi.visible = true;
 
-        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(0.5f));
+        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(0.3f));
         Vec3 position = Vec3(0, riichi_offset.y, riichi_offset.z);
         Path3D path = new LinearPath3D(position);
         animation.do_absolute_position(path);
@@ -117,11 +107,20 @@ public class RenderPlayer : WorldObject
 
         pond.riichi();
         in_riichi = true;
+
+        if (open)
+            hand.open_hand();
     }
 
     public void return_riichi(AnimationTime time)
     {
-        //render_riichi.animate_return();
+        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(0.3f));
+        Vec3 position = Vec3(0, riichi_offset.y, hand_offset);
+        Path3D path = new LinearPath3D(position);
+        animation.do_absolute_position(path);
+        animation.curve = new SmoothApproachCurve();
+
+        render_riichi.animate(animation);
     }
 
     public void late_kan(RenderTile tile, AnimationTime time)
@@ -182,9 +181,34 @@ public class RenderPlayer : WorldObject
         calls.add_call(new RenderCalls.RenderCallChii(tiles, discard_tile, tile_size));
     }
 
+    public void set_observed(bool observed)
+    {
+        this.observed = observed;
+        hand.animate_angle(observed ? VIEW_ANGLE : 0);
+    }
+
     public ArrayList<RenderTile> hand_tiles { get { return hand.tiles; } }
     //public RenderTile last_drawn_tile { get; private set; }
     public int seat { get; private set; }
     public bool in_riichi { get; private set; }
     public bool open { get { return hand.open; } set { hand.open = value; } } // Open riichi
+}
+
+private class RenderWindIndicator : WorldObjectTransformable
+{
+    private Wind wind;
+
+    public RenderWindIndicator(Wind wind)
+    {
+        this.wind = wind;
+    }
+
+    protected override void added()
+    {
+        RenderObject3D center_piece = store.load_geometry_3D("wind_indicator", false).geometry[0] as RenderObject3D;
+        center_piece.material.textures[0] = store.load_texture("WindIndicators/" + WIND_TO_STRING(wind));
+        set_object(center_piece);
+    }
+
+    public Vec3 riichi_offset { get; private set; }
 }

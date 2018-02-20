@@ -208,12 +208,12 @@ private class GraphicOptionsMenuView : SubOptionsMenuView
 
     public override void do_apply()
     {
-        options.shader_quality = (Options.QualityEnum)shader_option.index;
-        options.model_quality = (Options.QualityEnum)model_option.index;
-        options.fullscreen = (Options.OnOffEnum)fullscreen_option.index;
-        options.anisotropic_filtering = (Options.OnOffEnum)aniso_option.index;
-        options.anti_aliasing = (Options.OnOffEnum)aliasing_option.index;
-        options.v_sync = (Options.OnOffEnum)v_sync_option.index;
+        options.shader_quality = (QualityEnum)shader_option.index;
+        options.model_quality = (QualityEnum)model_option.index;
+        options.fullscreen = (OnOffEnum)fullscreen_option.index;
+        options.anisotropic_filtering = (OnOffEnum)aniso_option.index;
+        options.anti_aliasing = (OnOffEnum)aliasing_option.index;
+        options.v_sync = (OnOffEnum)v_sync_option.index;
     }
 }
 
@@ -246,8 +246,8 @@ private class AudioOptionsMenuView : SubOptionsMenuView
 
     public override void do_apply()
     {
-        options.music = (Options.OnOffEnum)music_option.index;
-        options.sounds = (Options.OnOffEnum)sounds_option.index;
+        options.music = (OnOffEnum)music_option.index;
+        options.sounds = (OnOffEnum)sounds_option.index;
     }
 }
 
@@ -275,9 +275,9 @@ private class AppearanceOptionsMenuView : SubOptionsMenuView
 
     public override void add_options()
     {
-        //options.tile_textures, options.tile_fore_color, options.tile_back_color
         tile = new TileMenuView();
         add_child(tile);
+        tile.texture_type = options.tile_textures;
         tile.inner_anchor = Vec2(1, 0.5f);
         tile.outer_anchor = Vec2(1, 0.5f);
 
@@ -358,12 +358,12 @@ private class AppearanceOptionsMenuView : SubOptionsMenuView
 
     private void regular_clicked()
     {
-        tile.texture_type = RenderTile.TextureType.REGULAR;
+        tile.texture_type = TileTextureEnum.REGULAR;
     }
 
     private void black_clicked()
     {
-        tile.texture_type = RenderTile.TextureType.BLACK;
+        tile.texture_type = TileTextureEnum.BLACK;
     }
 
     private void fore_color_changed()
@@ -380,7 +380,7 @@ private class AppearanceOptionsMenuView : SubOptionsMenuView
     {
         options.tile_fore_color = tile.front_color;
         options.tile_back_color = tile.back_color;
-        options.tile_textures = tile.texture_type == RenderTile.TextureType.REGULAR ? "regular" : "black";
+        options.tile_textures = tile.texture_type;
     }
 
     public override void resized()
@@ -414,12 +414,10 @@ private class TileMenuView : View3D
         tile = new RenderTile()
         {
             tile_type = new Tile(0, TileType.PIN1, false),
-            model_quality = RenderTile.ModelQuality.HIGH
+            model_quality = QualityEnum.HIGH
         };
 
         world.add_object(tile);
-        //tile.front_color = fore_color;
-        //tile.back_color = back_color;
 
         WorldCamera camera = new TargetWorldCamera(tile);
         world.add_object(camera);
@@ -427,13 +425,13 @@ private class TileMenuView : View3D
         camera.position = Vec3(0, 1, 1);
     }
 
-    /*public override void do_process(DeltaArgs delta)
+    protected override void process(DeltaArgs delta)
     {
         float r = delta.time;
-        tile.set_absolute_location(Vec3.empty(), new Quat.from_euler_vec(Vec3(r * -0.2f, r * 0.1f, r * 0.0812f)));
-    }*/
+        tile.set_absolute_location(Vec3.empty(), Quat.from_euler_vec(Vec3(r * -0.2f, r * 0.1f, r * 0.0812f)));
+    }
 
-    public RenderTile.TextureType texture_type
+    public TileTextureEnum texture_type
     {
         get { return tile.texture_type; }
         set

@@ -178,6 +178,25 @@ public enum Wind
     NORTH
 }
 
+public static Wind INT_TO_WIND(int wind)
+{
+    if (wind < 0) wind = 4 -((-wind) % 4);
+    wind %= 4;
+
+    switch (wind)
+    {
+    default:
+    case 0:
+        return Wind.EAST;
+    case 1:
+        return Wind.SOUTH;
+    case 2:
+        return Wind.WEST;
+    case 3:
+        return Wind.NORTH;
+    }
+}
+
 public static Wind NEXT_WIND(Wind wind)
 {
     switch (wind)
@@ -210,7 +229,7 @@ public static Wind PREVIOUS_WIND(Wind wind)
     }
 }
 
-public static string WIND_TO_STRING(Wind wind)
+public static string WIND_TO_KANJI(Wind wind)
 {
     switch (wind)
     {
@@ -223,6 +242,22 @@ public static string WIND_TO_STRING(Wind wind)
         return "西";
     case Wind.NORTH:
         return "北";
+    }
+}
+
+public static string WIND_TO_STRING(Wind wind)
+{
+    switch (wind)
+    {
+    case Wind.EAST:
+    default:
+        return "East";
+    case Wind.SOUTH:
+        return "South";
+    case Wind.WEST:
+        return "West";
+    case Wind.NORTH:
+        return "North";
     }
 }
 

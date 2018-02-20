@@ -23,9 +23,6 @@ class GameScene : WorldObject
     private Sound chii_sound;
     private Sound reveal_sound;
 
-    //private float table_length;
-    //private Vec3 tile_size;
-
     private RenderTable table;
 
     private Mutex action_lock;
@@ -58,64 +55,24 @@ class GameScene : WorldObject
         chii_sound = audio.load_sound("chii");
         reveal_sound = audio.load_sound("reveal");
 
-        //int index = player_index == -1 ? 0 : player_index;
-
-        //float tile_scale = 1.74f;
-        string extension = Options.quality_enum_to_string(options.model_quality);
-
-        //table = new RenderTable(extension, tile_size, round_wind, -(float)index / 2, score);
-        //add_object(table);
-
-        /*table_length = table.player_offset;
-        float wall_offset = (tile_size.x * 19 + tile_size.z) / 2;
-
-        for (int i = 0; i < tiles.length; i++)
-        {
-            RenderTile t = new RenderTile();
-            add_object(t);
-            t.tile_type = new Tile(i, TileType.BLANK, false);
-            t.front_color = options.tile_fore_color;
-            t.back_color = options.tile_back_color;
-            tiles[i] = t;
-        }
-
-        wall = new RenderWall(tiles, tile_size, wall_offset, dealer, wall_index);
-        add_object(wall);
-
-        for (int i = 0; i < players.length; i++)
-        {
-            players[i] = new RenderPlayer(i, i == dealer, table_length, wall_offset, tile_size, i == index, round_wind);
-            add_object(players[i]);
-        }
-
-        observer = players[index];
-
-        float camera_height = table_length * 1.8f;
-        float camera_dist = table_length * 1.0f;
-
-        WorldCamera camera = new TargetWorldCamera(table);
-        table.add_object(camera);
-        camera.position = Vec3(0, camera_height, camera_dist);
-        //camera.yaw = (float)observer.seat / 2;*/
-
-        table = new RenderTable(extension, observer_index, dealer, Vec3(0, 0, 0), wall_index, 0, score);
+        table = new RenderTable(observer_index, dealer, wall_index, observer_index, score);
         add_object(table);
+        load_options(options);
     }
 
     public void load_options(Options options)
     {
         this.options = options;
 
-        string extension = Options.quality_enum_to_string(options.model_quality);
-
         foreach (RenderTile tile in tiles)
         {
-            // extension, options.tile_textures
-            tile.reload();
+            tile.model_quality = options.model_quality;
+            tile.texture_type = options.tile_textures;
             tile.front_color = options.tile_fore_color;
             tile.back_color = options.tile_back_color;
+            tile.reload();
         }
-        table.reload(extension);
+        table.reload(options.model_quality);
     }
 
     public override void process(DeltaArgs delta)
@@ -364,23 +321,9 @@ class GameScene : WorldObject
         active = action.active;
     }
 
-    /*private void position_lights(float rotation)
-    {
-        Vec3 pos;
-
-        pos = Vec3(0, 50, table_length / 2);
-        pos = Calculations.rotate_y(Vec3.empty(), rotation, pos);
-        light1.position = pos;
-
-        pos = Vec3(0, 50, table_length);
-        pos = Calculations.rotate_y(Vec3.empty(), rotation, pos);
-        light2.position = pos;
-    }*/
-
     public RenderPlayer[] players { get { return table.players; } }
     public RenderTile[] tiles { get { return table.tiles; } }
     public RenderWall wall { get { return table.wall; } }
     public RenderPlayer observer { get; private set; }
-    public Camera camera { get; private set; }
     public bool active { get; set; }
 }

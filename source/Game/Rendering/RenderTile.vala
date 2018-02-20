@@ -25,7 +25,7 @@ public class RenderTile : WorldObjectTransformable
 
     public void reload()
     {
-        RenderGeometry3D tile = store.load_geometry_3D("tile_" + quality_to_string(model_quality), false);
+        RenderGeometry3D tile = store.load_geometry_3D("tile_" + quality_enum_to_string(model_quality), false);
         set_object(tile);
 
         transform.scale = Vec3(scale, scale, scale);
@@ -38,22 +38,24 @@ public class RenderTile : WorldObjectTransformable
 
     private void load_material()
     {
+        Color ambient = Color(0.1f, 0.1f, 0.1f, 1);
+
         MaterialSpecification spec = front.material.spec;
         spec.ambient_color = UniformType.STATIC;
-        spec.diffuse_color = UniformType.STATIC;
+        spec.diffuse_color = UniformType.DYNAMIC;
         spec.target_color = UniformType.DYNAMIC;
-        spec.static_ambient_color = Color.white();
-        spec.static_diffuse_color = Color.white();
+        spec.alpha = UniformType.DYNAMIC;
+        spec.static_ambient_color = ambient;
         front.material = store.load_material(spec);
         front.material.textures[0] = get_texture();
 
         spec = back.material.spec;
         spec.textures = 0;
         spec.ambient_color = UniformType.STATIC;
-        spec.diffuse_color = UniformType.STATIC;
+        spec.diffuse_color = UniformType.DYNAMIC;
         spec.target_color = UniformType.DYNAMIC;
-        spec.static_ambient_color = Color.black();
-        spec.static_diffuse_color = Color.black();
+        spec.alpha = UniformType.DYNAMIC;
+        spec.static_ambient_color = ambient;
         back.material = store.load_material(spec);
 
         set_diffuse_color();
@@ -61,7 +63,7 @@ public class RenderTile : WorldObjectTransformable
 
     private RenderTexture get_texture()
     {
-        string tex = tile_texture_type_to_string(texture_type);
+        string tex = tile_texture_enum_to_string(texture_type);
         string name = "Tiles/" + tex + "/" + TILE_TYPE_TO_STRING(tile_type.tile_type);
 
         if (tile_type.dora)
@@ -102,65 +104,16 @@ public class RenderTile : WorldObjectTransformable
 
     private void set_diffuse_color()
     {
-        /*front.material.diffuse_color = front_color;
-        back.material.diffuse_color = back_color;
-        back.material.diffuse_material_strength = 0;*/
+        float target = hovered || indicated ? 0.5f : 0;
+        Color col = Color(hovered ? 1 : 0, 1, 0, 1);
 
-        Color amb = indicated ? Color(-1.0f, 1.0f, -1.0f, 0.3f) : Color.none();
-
-        float target = 0f;
-        if (hovered)
-        {
-            target = 0.5f;
-            amb = Color(0.3f, 0.3f, 0.2f, 0.5f);
-        }
-
-        Color col = Color(1, 1, 0, 1);
-        /*front.material.set_uniform("target_color", new ColorUniformData(col));
-        back.material.set_uniform("target_color", new ColorUniformData(col));
-        front.material.set_uniform("target_color_strength", new FloatUniformData(target));
-        back.material.set_uniform("target_color_strength", new FloatUniformData(target));*/
         front.material.target_color = col;
         back.material.target_color = col;
         front.material.target_color_strength = target;
         back.material.target_color_strength = target;
-        /*
-        float strength = 0.4f;
-        //front.material.ambient_color = Color(strength * 1.5f, strength * 1.5f, strength, 0);
-        //back.material.ambient_color = Color(strength * 1.5f, strength * 1.5f, strength, 0);
 
-        if (hovered)
-        {
-            amb = ;
-            //front.material.ambient_color = Color(strength * 1.5f, strength * 1.5f, strength, 1);
-            //back.material.ambient_color = Color(strength * 1.5f, strength * 1.5f, strength, 1);
-            //front.material.ambient_color = Color(.a = 1.0f;
-            //back.material.ambient_color.a = 1.0f;* /
-        }
-        else
-        {
-            amb = Color.none();
-            //front.material.ambient_color = front_color;
-            //back.material.ambient_color = back_color;
-            //front.material.diffuse_color = front_color;
-            //back.material.diffuse_color = back_color;
-        }*/
-
-        /*front.material.ambient_color = Color
-        (
-            front_color.r + amb.r,
-            front_color.g + amb.g,
-            front_color.b + amb.b,
-            front.material.ambient_material_strength / 2 + amb.a
-        );
-
-        back.material.ambient_color = Color
-        (
-            back_color.r + amb.r,
-            back_color.g + amb.g,
-            back_color.b + amb.b,
-            back.material.ambient_material_strength / 2 + amb.a
-        );*/
+        front.material.diffuse_color = front_color;
+        back.material.diffuse_color = back_color;
     }
 
     public Color front_color
@@ -196,8 +149,8 @@ public class RenderTile : WorldObjectTransformable
     private RenderObject3D front { get; private set; }
     private RenderObject3D back { get; private set; }
     public Tile tile_type { get; set; }
-    public ModelQuality model_quality { get; set; }
-    public TextureType texture_type { get; set; }
+    public QualityEnum model_quality { get; set; }
+    public TileTextureEnum texture_type { get; set; }
 
     public new float scale
     {
@@ -214,6 +167,8 @@ public class RenderTile : WorldObjectTransformable
         get { return _hovered; }
         set
         {
+            if (_hovered == value)
+                return;
             _hovered = value;
             set_diffuse_color();
         }
@@ -224,31 +179,11 @@ public class RenderTile : WorldObjectTransformable
         get { return _indicated; }
         set
         {
+            if (_indicated == value)
+                return;
             _indicated = value;
             set_diffuse_color();
         }
-    }
-
-    public enum ModelQuality
-    {
-        LOW,
-        HIGH
-    }
-
-    public enum TextureType
-    {
-        REGULAR,
-        BLACK
-    }
-
-    private static string quality_to_string(ModelQuality quality)
-    {
-        return quality == ModelQuality.LOW ? "low" : "high";
-    }
-
-    private static string tile_texture_type_to_string(TextureType texture_type)
-    {
-        return texture_type == TextureType.BLACK ? "black" : "regular";
     }
 
     public static ArrayList<RenderTile> sort_tiles(ArrayList<RenderTile> list)

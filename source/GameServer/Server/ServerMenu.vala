@@ -20,7 +20,6 @@ namespace GameServer
             settings = new ServerSettings.default();
 
             parser.connect(client_game_start, typeof(ClientMessageMenuGameStart));
-            //parser.connect(client_game_start_event, typeof(ClientMessageMenuGameStartEvent));
             parser.connect(client_add_bot, typeof(ClientMessageMenuAddBot));
             parser.connect(client_kick_player, typeof(ClientMessageMenuKickPlayer));
             parser.connect(client_settings, typeof(ClientMessageMenuSettings));
@@ -137,7 +136,7 @@ namespace GameServer
             int[] seats = random_seats(rnd, this.players.size);
             ArrayList<ServerPlayer> shuffled_players = new ArrayList<ServerPlayer>();
             for (int i = 0; i < this.players.size; i++)
-                shuffled_players.add(this.players[seats[i]]);
+                shuffled_players.add(this.players[i /*seats[i]*/]);
             this.players = shuffled_players;
 
             GamePlayer[] players = new GamePlayer[this.players.size];
@@ -150,65 +149,6 @@ namespace GameServer
 
             game_start(info);
         }
-
-        /*private void clint_game_start_event(ServerPlayer player, ClientMessage message)
-        {
-            if (player != host)
-                return;
-
-            //var msg = message as ClientMessageMenuGameStartEvent;
-
-            GameLog log = Environment.load_game_log("derp");
-            if (log == null)
-                return;
-
-            mutex.lock();
-
-            foreach (ServerPlayer p in players)
-            {
-                p.receive_message.disconnect(message_received);
-                p.disconnected.disconnect(player_disconnected);
-            }
-
-            GameEventController event = new GameEventController.with_log(log);
-
-            observers.add_range(players);
-            players = event.players;
-            int[] seats = log.starting_seats;
-
-            GamePlayer[] players = new GamePlayer[this.players.size];
-            for (int i = 0; i < players.length; i++)
-                players[i] = new GamePlayer(i, this.players[i].name);
-
-            int starting_dealer = log.starting_dealer;
-            int starting_score = log.starting_score;
-            int decision_time = 0;//10 + 1; // Add a second so the indicator counts down to 0
-            int round_wait_time = log.round_wait_time;
-            int hanchan_wait_time = log.hanchan_wait_time;
-            int game_wait_time = log.game_wait_time;
-            int round_count = log.round_count;
-            int hanchan_count = log.hanchan_count;
-            int uma_higher = log.uma_higher;
-            int uma_lower = log.uma_lower;
-
-            GameStartInfo info = new GameStartInfo
-            (
-                players,
-                starting_dealer,
-                starting_score,
-                round_count,
-                hanchan_count,
-                decision_time,
-                round_wait_time,
-                hanchan_wait_time,
-                game_wait_time,
-                uma_higher,
-                uma_lower
-            );
-
-            mutex.unlock();
-            game_start_event(info);
-        }*/
 
         private void client_add_bot(ServerPlayer player, ClientMessage message)
         {
@@ -228,7 +168,7 @@ namespace GameServer
                 return;
             }
 
-            Object? obj = Object.newv(type, new Parameter[0]);
+            Object? obj = Object.new_with_properties(type, new string[0], new Value[0]);
             if (obj == null)
             {
                 mutex.lock();

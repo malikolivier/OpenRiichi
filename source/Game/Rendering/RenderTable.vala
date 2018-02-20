@@ -4,19 +4,15 @@ public class RenderTable : WorldObject
 {
     private int observer_index;
     private int dealer;
-    public Vec3 tile_size { get; private set; }
     private float field_rotation;
     private int wall_index;
     private RoundScoreState score;
-    public RenderPlayer[] players { get; private set; }
-    public RenderTile[] tiles { get; private set; }
-    public RenderWall wall { get; private set; }
+    private WorldTableObject table;
 
-    public RenderTable(string extension, int observer_index, int dealer, Vec3 tile_size, int wall_index, float field_rotation, RoundScoreState score)
+    public RenderTable(int observer_index, int dealer, int wall_index, float field_rotation, RoundScoreState score)
     {
         this.observer_index = observer_index;
         this.dealer = dealer;
-        this.tile_size = tile_size;
         this.wall_index = wall_index;
         this.field_rotation = field_rotation;
         this.score = score;
@@ -30,10 +26,7 @@ public class RenderTable : WorldObject
         tiles = new RenderTile[136];
         for (int i = 0; i < tiles.length; i++)
         {
-            tiles[i] = new RenderTile()
-            {
-                model_quality = RenderTile.ModelQuality.HIGH
-            };
+            tiles[i] = new RenderTile();
             add_object(tiles[i]);
             tiles[i].scale = tile_scale;
         }
@@ -46,44 +39,27 @@ public class RenderTable : WorldObject
         players = new RenderPlayer[4];
         for (int i = 0; i < players.length; i++)
         {
-            players[i] = new RenderPlayer(i, i == dealer, hand_offset, center.riichi_offset, tile_size, i == observer_index, score.round_wind);
+            players[i] = new RenderPlayer(i, i == dealer, hand_offset, center.riichi_offset, tile_size, i == observer_index, INT_TO_WIND(i - dealer));
             add_object(players[i]);
-            players[i].rotation = new Quat.from_euler(i / 2.0f, 0, 0);
+            players[i].rotation = Quat.from_euler(i / 2.0f, 0, 0);
         }
         
         wall = new RenderWall(tiles, tile_size, dealer, wall_index);
         add_object(wall);
 
-        reload("extension");
+        reload(QualityEnum.HIGH);
     }
 
-    public void reload(string extension)
+    public void reload(QualityEnum quality)
     {
-        add_object(new WorldTableObject());
-        /*table = store.load_geometry_3D("table_" + extension, true);
+        if (table == null)
+        {
+            table = new WorldTableObject();
+            add_object(table);
+            table.rotation = Quat.from_euler(field_rotation / 2, 0, 0);
+        }
 
-        string dir = Environment.get_user_dir() + "Custom/";
-
-        RenderTexture? texture = store.load_texture_dir(dir, "field");
-
-        if (texture != null)
-            field = store.load_geometry_3D_dir(dir, "field", false);
-        else
-            texture = store.load_texture("field_" + extension);
-
-        if (field == null)
-            field = store.load_geometry_3D("field", false);
-
-        ((RenderObject3D)field.geometry[0]).texture = texture;
-
-        table.position = Vec3(0, -0.163f, 0);
-        table.scale = Vec3(10, 10, 10);
-        field.position = Vec3(0, 0, 0);
-        field.scale = Vec3(9.6f, 1, 9.6f);
-        field.rotation = new Quat.from_euler_vec(Vec3(0, field_rotation, 0));
-
-        center = Vec3(0, field.position.y, 0);
-        player_offset = field.scale.z - 0.3f - (tile_size.x / 2 + tile_size.z);*/
+        table.load(quality);
     }
 
     public void split_dead_wall()
@@ -91,6 +67,10 @@ public class RenderTable : WorldObject
         wall.split_dead_wall();
     }
 
+    public RenderPlayer[] players { get; private set; }
+    public RenderTile[] tiles { get; private set; }
+    public RenderWall wall { get; private set; }
+    public Vec3 tile_size { get; private set; }
     public float player_offset { get; private set; }
     //public float wall_offset { get; private set; }
 }
@@ -100,13 +80,9 @@ public class WorldTableObject : WorldObject
     private RenderGeometry3D table;
     private RenderObject3D field;
 
-    public override void added()
+    public void load(QualityEnum quality)
     {
-        reload("high");
-    }
-
-    public void reload(string extension)
-    {
+        string extension = quality_enum_to_string(quality);
         table = store.load_geometry_3D("table_" + extension, true);
         field = store.create_plane();
 
@@ -156,6 +132,14 @@ private class RenderTableCenterPiece : WorldObjectTransformable
         center_piece = store.load_geometry_3D("table_center", true).geometry[0] as RenderObject3D;
         set_object(center_piece);
 
+        var spec = center_piece.material.spec;
+        spec.specular_color = UniformType.STATIC;
+        spec.static_specular_color = Color(0.3f, 0.3f, 0.3f, 1);
+
+        var material = center_piece.material.textures[0];
+        center_piece.material = store.load_material(spec);
+        center_piece.material.textures[0] = material;
+
         float scale = tile_size.x * 2.9f;
         this.scale = Vec3(scale, scale, scale);
 
@@ -168,8 +152,8 @@ private class RenderTableCenterPiece : WorldObjectTransformable
         round_wind_label = new WorldLabel();
         add_object(round_wind_label);
         round_wind_label.bold = true;
-        round_wind_label.rotation = new Quat.from_euler(field_rotation, 0, 0);
-        round_wind_label.text = WIND_TO_STRING(score.round_wind);
+        round_wind_label.rotation = Quat.from_euler(field_rotation / 2, 0, 0);
+        round_wind_label.text = WIND_TO_KANJI(score.round_wind);
         round_wind_label.color = Color(0.1f, 0.3f, 1, 1);
         float s = 2.5f;
         round_wind_label.scale = Vec3(s, s, s);
@@ -180,7 +164,7 @@ private class RenderTableCenterPiece : WorldObjectTransformable
         {
             WorldObject wrap = new WorldObject();
             add_object(wrap);
-            wrap.rotation = new Quat.from_euler(i / 2.0f, 0, 0);
+            wrap.rotation = Quat.from_euler(i / 2.0f, 0, 0);
             names[i] = new RenderTablePlayerNameField(score.players[i].name, score.players[i].wind, score.players[i].points, round_wind_label.end_size, round_wind_label.color);
             wrap.add_object(names[i]);
             wrap.position = Vec3(0, center_size.y, 0);
@@ -209,13 +193,12 @@ private class RenderTablePlayerNameField : WorldObject
 
     protected override void added()
     {
-        float dist = 0.5f;
         float scale = 0.8f;
 
         WorldLabel wind_label = new WorldLabel();
         add_object(wind_label);
         wind_label.bold = true;
-        wind_label.text = WIND_TO_STRING(wind);
+        wind_label.text = WIND_TO_KANJI(wind);
         wind_label.color = color;
         wind_label.scale = Vec3(scale, scale, scale);
         wind_label.font_size = wind_label.font_size * 8;

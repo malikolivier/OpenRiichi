@@ -140,6 +140,26 @@ class ScoringView : View2D
         prev_score_button.visible = !round_finished;
     }
 
+    public void next()
+    {
+        player_index = (player_index + 1) % 4;
+        refresh_score();
+    }
+
+    public void prev()
+    {
+        player_index = (player_index + 3) % 4;
+        refresh_score();
+    }
+
+    private void refresh_score()
+    {
+        if (scoring_view != null)
+            remove_child(scoring_view);
+        scoring_view = null;
+        update_score_view(false);
+    }
+
     private void update_score_view(bool round_finished)
     {
         check_score_change_buttons();

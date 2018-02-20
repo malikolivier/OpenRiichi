@@ -84,7 +84,7 @@ class ScoringInnerView : View2D
 
         wind_indicator = new LabelControl();
         add_child(wind_indicator);
-        wind_indicator.text = WIND_TO_STRING(score.round_wind);
+        wind_indicator.text = WIND_TO_KANJI(score.round_wind);
         wind_indicator.inner_anchor = Vec2(0, 1);
         wind_indicator.outer_anchor = Vec2(0, 1);
         wind_indicator.font_size = 60;
@@ -153,11 +153,6 @@ class ScoringInnerView : View2D
             view.size = Size2(right.rect.x - (left.rect.x + left.size.width) - padding * 2, top.rect.y - (bottom.rect.y + bottom.rect.height) - riichi_view.size.height - padding * 2);
             view.position = Vec2(0, riichi_view.size.height / 2);
         }
-
-        /*if (riichi_view != null)
-            riichi_view.size = Size2((right.rect.x - (left.rect.x + left.size.width)) / 2, riichi_view.size.height);
-        if (renchan_view != null)
-            renchan_view.size = Size2((right.rect.x - (left.rect.x + left.size.width)) / 2, renchan_view.size.height);*/
     }
 
     private void score_selected(int player_index)

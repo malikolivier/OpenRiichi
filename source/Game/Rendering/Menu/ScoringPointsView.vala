@@ -132,6 +132,7 @@ class ScoringPointsView : View2D
         var s = score.result.scores[0];
         var d = s.round.dora;
         var u = s.round.ura_dora;
+        
         dora = new ScoringDoraView(d, 2 - d.size / 2, 4 - d.size / 2);
         ura = new ScoringDoraView(u, 2 - (u.size - 1) / 2, 4 - (u.size - 1) / 2);
         add_child(dora);

@@ -33,9 +33,10 @@ public class RenderCalls : WorldObject
         int index = calls.index_of(pon);
         calls.remove_at(index);
         calls.insert(index, kan);
-        remove_object(pon);
+        add_object(kan);
 
         arrange();
+        remove_object(pon);
     }
 
     private void arrange()
@@ -44,7 +45,7 @@ public class RenderCalls : WorldObject
 
         foreach (RenderCall call in calls)
         {
-            call.position = Vec3(0, 0, -height);
+            call.animate_to(-height);
             height += call.height;
             call.arrange();
         }
@@ -68,10 +69,29 @@ public class RenderCalls : WorldObject
 
     public abstract class RenderCall : WorldObject
     {
-        public abstract void arrange();
+        public abstract void arrange(bool animate=true);
         public abstract float height { get; }
         public abstract float width { get; }
         public ArrayList<RenderTile> tiles { get; protected set; }
+
+        protected void animate_tile(RenderTile tile, Vec3 pos, Quat rot, bool animate)
+        {
+            if (animate)
+                tile.animate_towards(pos, rot);
+            else
+                tile.set_absolute_location(pos, rot);
+        }
+
+        public void animate_to(float height)
+        {
+            WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(0.15f));
+            Path3D path = new LinearPath3D(Vec3(0, 0, height));
+            animation.do_absolute_position(path);
+            animation.curve = new SmoothApproachCurve();
+            
+            cancel_buffered_animations();
+            animate(animation, true);
+        }
     }
 
     public class RenderCallLateKan : RenderCall
@@ -103,13 +123,13 @@ public class RenderCalls : WorldObject
             tiles.insert(n, kan_tile);
         }
 
-        protected override void arrange()
+        protected override void arrange(bool animate=true)
         {
             foreach (RenderTile tile in tiles)
                 convert_object(tile);
         
-            float width = -tile_size.x / 2;
-            float bottom = -tile_size.z / 2;
+            float width = 0;
+            float bottom = 0;
             int n;
 
             switch (alignment)
@@ -158,9 +178,9 @@ public class RenderCalls : WorldObject
                 }
 
                 Vec3 pos = Vec3(-x, 0, -z);
-                Quat rot = new Quat.from_euler(0, rotation, 0);
+                Quat rot = Quat.from_euler(rotation, 0, 0);
 
-                tile.animate_towards(pos, rot);
+                animate_tile(tile, pos, rot, animate);
             }
         }
 
@@ -178,7 +198,7 @@ public class RenderCalls : WorldObject
             this.tile_size = tile_size;
         }
 
-        protected override void arrange()
+        protected override void arrange(bool animate=true)
         {
             foreach (RenderTile tile in tiles)
                 convert_object(tile);
@@ -188,16 +208,15 @@ public class RenderCalls : WorldObject
                 RenderTile tile = tiles[tiles.size - i - 1];
 
                 Vec3 pos = Vec3(-tile_size.x * (i + 0.5f), 0, -tile_size.z / 2);
-                Quat rot = new Quat.from_euler(0, (i == 1 || i == 2) ? 1 : 0, 0);
+                Quat rot = Quat.from_euler(0, (i == 1 || i == 2) ? 1 : 0, 0);
 
-                tile.animate_towards(pos, rot);
+                animate_tile(tile, pos, rot, animate);
             }
         }
 
         public override float height { get { return tile_size.z; } }
         public override float width { get { return tile_size.x * 4; } }
     }
-
 
     public class RenderCallOpenKan : RenderCall
     {
@@ -228,7 +247,7 @@ public class RenderCalls : WorldObject
             tiles.insert(n, discard_tile);
         }
 
-        protected override void arrange()
+        protected override void arrange(bool animate=true)
         {
             foreach (RenderTile tile in tiles)
                 convert_object(tile);
@@ -275,9 +294,9 @@ public class RenderCalls : WorldObject
                 }
 
                 Vec3 pos = Vec3(-x, 0, -z);
-                Quat rot = new Quat.from_euler(rotation, 0, 0);
+                Quat rot = Quat.from_euler(rotation, 0, 0);
 
-                tile.animate_towards(pos, rot);
+                animate_tile(tile, pos, rot, animate);
             }
         }
 
@@ -313,7 +332,7 @@ public class RenderCalls : WorldObject
             tiles.insert(n, discard_tile);
         }
 
-        protected override void arrange()
+        protected override void arrange(bool animate=true)
         {
             foreach (RenderTile tile in tiles)
                 convert_object(tile);
@@ -360,9 +379,9 @@ public class RenderCalls : WorldObject
                 }
 
                 Vec3 pos = Vec3(-x, 0, -z);
-                Quat rot = new Quat.from_euler(rotation, 0, 0);
+                Quat rot = Quat.from_euler(rotation, 0, 0);
 
-                tile.animate_towards(pos, rot);
+                animate_tile(tile, pos, rot, animate);
             }
         }
 
@@ -374,7 +393,6 @@ public class RenderCalls : WorldObject
     public class RenderCallChii : RenderCall
     {
         private Vec3 tile_size;
-        //private Alignment alignment;
 
         public RenderCallChii(ArrayList<RenderTile> tiles, RenderTile discard_tile, Vec3 tile_size)
         {
@@ -389,7 +407,7 @@ public class RenderCalls : WorldObject
             this.tiles.add(discard_tile);
         }
 
-        protected override void arrange()
+        protected override void arrange(bool animate=true)
         {
             foreach (RenderTile tile in tiles)
                 convert_object(tile);
@@ -422,9 +440,9 @@ public class RenderCalls : WorldObject
                 }
 
                 Vec3 pos = Vec3(-x, 0, -z);
-                Quat rot = new Quat.from_euler(rotation, 0, 0);
+                Quat rot = Quat.from_euler(rotation, 0, 0);
 
-                tile.animate_towards(pos, rot);
+                animate_tile(tile, pos, rot, animate);
             }
         }
 

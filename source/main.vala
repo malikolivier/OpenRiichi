@@ -39,8 +39,8 @@ public static int main(string[] args)
     while (true)
     {
         Options options = new Options.from_disk();
-        int multisamples = options.anti_aliasing == Options.OnOffEnum.ON ? 2 : 0;
-        bool fullscreen = options.fullscreen == Options.OnOffEnum.ON;
+        int multisamples = options.anti_aliasing == OnOffEnum.ON ? 2 : 0;
+        bool fullscreen = options.fullscreen == OnOffEnum.ON;
         string window_name = "OpenRiichi";
         int window_width = 1280, window_height = 720;
 

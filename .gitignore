@@ -1,4 +1,6 @@
 .vscode
+*.code-workspace
+*.shader
 bin/OpenRiichi*
 bin/libengine*
 *.c

@@ -12,12 +12,12 @@ private class RenderHand : WorldObject
         tiles = new ArrayList<RenderTile>();
         this.tile_size = tile_size;
         this.view_angle = view_angle;
-        winning_tile = null;
+        last_drawn_tile = null;
     }
 
     public override void added()
     {
-        rotation = new Quat.from_euler(0, 0.5f -view_angle, 0);
+        rotation = Quat.from_euler(0, 0.5f - view_angle, 0);
         wrap = new WorldObject();
         add_object(wrap);
         wrap.position = Vec3(0, tile_size.y / 2, -tile_size.z / 2);
@@ -25,8 +25,8 @@ private class RenderHand : WorldObject
 
     public void draw_tile(RenderTile tile)
     {
+        last_drawn_tile = null;
         wrap.convert_object(tile);
-        winning_tile = null;
         drawn++;
 
         if (tiles.size > 1 && drawn >= 14)
@@ -42,6 +42,8 @@ private class RenderHand : WorldObject
             sort_hand();
             order_hand(true);
         }
+
+        last_drawn_tile = tile;
     }
 
     public void remove(RenderTile tile)
@@ -72,8 +74,62 @@ private class RenderHand : WorldObject
         for (int i = 0; i < tiles.size; i++)
             order_tile(tiles[i], i, animate);
 
-        if (winning_tile != null)
-            order_tile(winning_tile, tiles.size + 0.5f, animate);
+        if (last_drawn_tile != null)
+            order_tile(last_drawn_tile, tiles.size + 0.5f, animate);
+    }
+
+    public void ron(RenderTile tile)
+    {
+        tsumo();
+    }
+
+    public void tsumo()
+    {
+        order_tile(last_drawn_tile, tiles.size + 0.5f, true);
+        
+        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(0.5f));
+        PathQuat rot = new LinearPathQuat(Quat());
+        animation.do_absolute_rotation(rot);
+        animation.curve = new SmoothDepartCurve();
+        
+        cancel_buffered_animations();
+        animate(animation, true);
+    }
+
+    public void open_hand()
+    {
+        open = true;
+        tsumo();
+    }
+
+    public void close_hand()
+    {
+        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(0.5f));
+        PathQuat rot = new LinearPathQuat(Quat.from_euler(0, 1, 0));
+        animation.do_absolute_rotation(rot);
+        animation.curve = new SmoothDepartCurve();
+        cancel_buffered_animations();
+        animate(animation, true);
+
+        animation = new WorldObjectAnimation(new AnimationTime.preset(0.5f));
+        Path3D path = new LinearPath3D(Vec3(0, -tile_size.y / 2, -tile_size.z / 2));
+        animation.do_absolute_position(path);
+        animation.curve = new SmoothDepartCurve();
+        wrap.animate(animation, true);
+    }
+
+    public void animate_angle(float angle)
+    {
+        if (open)
+            return;
+
+        WorldObjectAnimation animation = new WorldObjectAnimation(new AnimationTime.preset(2));
+        PathQuat rot = new LinearPathQuat(Quat.from_euler(0, 0.5f - angle, 0));
+        animation.do_absolute_rotation(rot);
+        animation.curve = new SCurve(0.5f);
+
+        cancel_buffered_animations();
+        animate(animation, true);
     }
 
     private void order_tile(RenderTile tile, float tile_position, bool animate)
@@ -81,9 +137,9 @@ private class RenderHand : WorldObject
         Vec3 pos = Vec3((tile_position - (tiles.size - 1) / 2.0f) * tile_size.x, 0, 0);
 
         if (animate)
-            tile.animate_towards(pos, new Quat());
+            tile.animate_towards(pos, Quat());
         else
-            tile.set_absolute_location(pos, new Quat());
+            tile.set_absolute_location(pos, Quat());
     }
 
     private void order_draw_tile(RenderTile tile)
@@ -95,13 +151,13 @@ private class RenderHand : WorldObject
             -(tile_size.z + tile_size.x) / 2
         );
 
-        Quat rot = new Quat.from_euler(0.5f, 0, 0);
+        Quat rot = Quat.from_euler(0.5f, 0, 0);
 
         tile.animate_towards(pos, rot);
     }
 
     public ArrayList<RenderTile> tiles { get; private set; }
     public float view_angle { get; set; }
-    public RenderTile? winning_tile { get; set; }
+    public RenderTile? last_drawn_tile { get; private set; }
     public bool open { get; set; }  // Open riichi
 }

@@ -160,7 +160,7 @@ namespace GameServer
 
         public bool riichi(bool open)
         {
-            if (open && settings.open_riichi != Options.OnOffEnum.ON)
+            if (open && settings.open_riichi != OnOffEnum.ON)
                 return false;
 
             return state.riichi(open);
@@ -292,8 +292,8 @@ namespace GameServer
 
             if (ron_players.size > 1)
             {
-                if (ron_players.size == 3 && settings.triple_ron_draw == Options.OnOffEnum.ON) {} // Empty
-                else if (settings.multiple_ron != Options.OnOffEnum.ON)
+                if (ron_players.size == 3 && settings.triple_ron_draw == OnOffEnum.ON) {} // Empty
+                else if (settings.multiple_ron != OnOffEnum.ON)
                 {
                     var p = ron_players[0];
                     ron_players.clear();
@@ -313,7 +313,7 @@ namespace GameServer
                     null,
                     CallDecisionType.RON,
                     state.riichi_return_index,
-                    ron_players.size >= 3 && settings.triple_ron_draw == Options.OnOffEnum.ON
+                    ron_players.size >= 3 && settings.triple_ron_draw == OnOffEnum.ON
                 );
             }
             else

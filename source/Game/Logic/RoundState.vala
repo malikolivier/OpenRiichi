@@ -37,20 +37,20 @@ public class RoundState : Object
 
         if (shuffled)
         {
-            /* For testing purposes
+            //* For testing purposes
             TileType[] p1 = new TileType[]
             {
                 TileType.MAN6,
                 TileType.MAN6,
-                TileType.MAN7,
-                TileType.MAN8,
+                TileType.MAN6,
+                TileType.MAN6,
                 TileType.PIN7,
-                TileType.PIN8,
-                TileType.PIN9,
-                TileType.SOU5,
+                TileType.PIN7,
+                TileType.PIN7,
+                TileType.PIN7,
                 TileType.SOU6,
                 TileType.SOU7,
-                TileType.HATSU,
+                TileType.SOU7,
                 TileType.HATSU,
                 TileType.HATSU,
             };
@@ -70,33 +70,34 @@ public class RoundState : Object
 
             TileType[] draw_wall = new TileType[]
             {
+                TileType.SOU6,
+                TileType.SOU7,
                 TileType.BLANK,
-                TileType.HATSU,
                 TileType.BLANK,
                 TileType.BLANK,
-                TileType.BLANK,
-                TileType.PIN1,
+                TileType.SOU7,
             };
 
 
             TileType[] dead_wall = new TileType[]
             {
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.HAKU,
-                TileType.BLANK,
-                TileType.BLANK,
-                TileType.BLANK,
                 TileType.PIN1,
+                TileType.PIN2,
+                TileType.PIN3,
+                TileType.PIN4,
+                TileType.PIN5,
+                TileType.PIN6,
+                TileType.PIN8,
+                TileType.PIN9,
+                TileType.PIN9,
+                TileType.PIN9,
+                TileType.PIN1,
+                TileType.PIN8,
+                TileType.SOU6,
+                TileType.SOU6,
             };
 
-            wall = new RoundStateWall.seeded(dealer, wall_index, settings.aka_dora == Options.OnOffEnum.ON, true, rnd, p1, p2, p3, p4, draw_wall, dead_wall);
+            wall = new RoundStateWall.seeded(dealer, wall_index, settings.aka_dora == OnOffEnum.ON, true, rnd, p1, p2, p3, p4, draw_wall, dead_wall);
             /*/
             wall = new RoundStateWall.shuffled(dealer, wall_index, settings.aka_dora == Options.OnOffEnum.ON, rnd);
             //*/

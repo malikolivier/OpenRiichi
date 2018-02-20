@@ -3,7 +3,6 @@ using Gee;
 
 public class GameEscapeMenuView : View2D
 {
-    //private RectangleControl background;
     private OptionsMenuView options_view;
     private MenuTextButton back_button;
     private MenuTextButton options_button;

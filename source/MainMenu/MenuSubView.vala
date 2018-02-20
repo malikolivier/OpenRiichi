@@ -17,9 +17,6 @@ abstract class MenuSubView : View2D
     protected virtual ArrayList<MenuTextButton>? get_main_buttons() { return null; }
     protected virtual ArrayList<MenuTextButton>? get_menu_buttons() { return null; }
 
-    protected void do_finish() { _finish(this); finish(this); }
-    protected void do_back() { _back(this); back(this); }
-
     private LabelControl? name_label;
     private SizingControl main_buttons_control = new SizingControl();
     private SizingControl menu_buttons_control = new SizingControl();
@@ -75,15 +72,37 @@ abstract class MenuSubView : View2D
     public void load_sub_view(MenuSubView view)
     {
         view._finish.connect(sub_finished);
-        view._back.connect(sub_finished);
+        view._back.connect(sub_back);
         visibility_change(false);
         add_child(view);
+    }
+
+    protected void do_finish()
+    {
+        MenuSubView view = this;
+        _finish(view);
+        finish(view);
+    }
+
+    protected void do_back()
+    {
+        MenuSubView view = this;
+        _back(view);
+        back(view);
     }
 
     private void sub_finished(MenuSubView view)
     {
         view._finish.disconnect(sub_finished);
-        view._back.disconnect(sub_finished);
+        view._back.disconnect(sub_back);
+        remove_child(view);
+        visibility_change(true);
+    }
+
+    private void sub_back(MenuSubView view)
+    {
+        view._finish.disconnect(sub_finished);
+        view._back.disconnect(sub_back);
         remove_child(view);
         visibility_change(true);
     }

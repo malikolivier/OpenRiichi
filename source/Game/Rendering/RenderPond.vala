@@ -92,7 +92,7 @@ private class RenderPond : WorldObject
             }
 
             Vec3 pos = Vec3(x, 0, y);
-            Quat rot = new Quat.from_euler(r, 0, 0);
+            Quat rot = Quat.from_euler(r, 0, 0);
 
             tile.animate_towards(pos, rot);
         }

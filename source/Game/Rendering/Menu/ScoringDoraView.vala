@@ -20,15 +20,7 @@ public class ScoringDoraView : View3D
 
     public override void added()
     {
-        /*RectangleControl rect = new RectangleControl();
-        add_child(rect);
-        rect.resize_style = ResizeStyle.RELATIVE;
-        rect.color = Color(1, 0, 0, 0.1f);*/
-
         Options options = new Options.from_disk();
-
-        //string extension = Options.quality_enum_to_string(options.model_quality);
-        //string texture_type = options.tile_textures;
 
         RenderTile size_tile = new RenderTile();
         world.add_object(size_tile);
@@ -42,17 +34,23 @@ public class ScoringDoraView : View3D
         {
             bool revealed = i >= front_tiles && i < front_tiles + tile_list.size && tile_list[i - front_tiles].tile_type != TileType.BLANK;
             Tile t = revealed ? tile_list[i - front_tiles] : new Tile(-1, TileType.BLANK, false);
-            RenderTile tile = new RenderTile();
+            RenderTile tile = new RenderTile()
+            {
+                tile_type = t,
+                model_quality = options.model_quality,
+                texture_type = options.tile_textures
+            };
             world.add_object(tile);
+
             tiles.add(tile);
 
-            tile.set_absolute_location(Vec3(p, 0, 0), new Quat.from_euler(revealed ? 0 : 1, 1, 0));
+            tile.set_absolute_location(Vec3(p, 0, 0), Quat.from_euler(0, 0, revealed ? 0 : 1));
             tile.front_color = options.tile_fore_color;
             tile.back_color = options.tile_back_color;
             p += tile_size.x;
         }
 
-        float len = 15;
+        float len = 2;
 
         Vec3 pos = Vec3(0, len, len);
 
@@ -69,11 +67,11 @@ public class ScoringDoraView : View3D
         world.add_object(light2);
 
         light1.color = Color.white();
-        light1.position = Vec3(len, len * 2, -len);
-        light1.intensity = 15;
-        light2.color = Color.white();
-        light2.position = Vec3(-len, len * 2, -len);
-        light2.intensity = 15;
+        light1.position = Vec3(len, len * 2, len);
+        light1.intensity = 3;
+        light2.color = light1.color;
+        light2.position = Vec3(-len, len * 2, len);
+        light2.intensity = light1.intensity;
     }
 
     public float alpha
@@ -84,22 +82,4 @@ public class ScoringDoraView : View3D
                 tile.alpha = value;
         }
     }
-
-    /*float mul = 1;
-    float pitch;
-    protected override void do_key_press(KeyArgs key)
-    {
-        pitch = camera.pitch;
-
-        if (key.keycode == KeyCode.NUM_0)
-            mul += 0.001f;
-        else if (key.keycode == KeyCode.NUM_1)
-            mul -= 0.001f;
-        else if (key.keycode == KeyCode.NUM_2)
-            pitch += 0.001f;
-        else if (key.keycode == KeyCode.NUM_3)
-            pitch -= 0.001f;
-
-        camera.pitch = pitch;
-    }*/
 }

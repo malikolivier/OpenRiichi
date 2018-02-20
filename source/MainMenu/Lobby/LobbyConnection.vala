@@ -53,14 +53,12 @@ public class LobbyConnection
         send_message(new ClientLobbyMessageGetLobbies());
     }
 
-    public void authenticate(string username_in)
+    public void authenticate(string username)
     {
-        // TODO: Unify name check
-        string username = username_in.strip();
-        if (username.length < 1 || username.length > 20)
+        if (!Environment.is_valid_name(username))
             return;
 
-        send_message(new ClientLobbyMessageAuthenticate(username));
+        send_message(new ClientLobbyMessageAuthenticate(Environment.sanitize_name(username)));
     }
 
     public void enter_lobby(LobbyInformation lobby)

@@ -2,7 +2,7 @@ using Gee;
 
 namespace GameServer
 {
-    abstract class ServerGameRound : Object // Signal receiver needs to be object
+    abstract class ServerGameRound // Signal receiver needs to be object
     {
         private RoundStartInfo info;
 

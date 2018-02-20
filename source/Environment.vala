@@ -33,7 +33,7 @@ public class Environment
         bool console_color = set_console_color_mode();
 
         logger = new Logger("application/", console_color);
-        Log.set_default_handler (glib_log_func);
+        Log.set_default_handler(glib_log_func);
         set_print_handler(glib_print);
         set_printerr_handler(glib_error);
         engine_logger = new LogCallback();
@@ -102,6 +102,8 @@ public class Environment
         typeof(ServerMessageMenuSlotClear).class_ref();
         typeof(ServerMessageMenuSettings).class_ref();
         typeof(ServerMessageMenuGameLog).class_ref();
+        typeof(ServerMessageTileAssignment).class_ref();
+        typeof(ServerMessageTileDraw).class_ref();
         typeof(ServerMessageDraw).class_ref();
 
         typeof(ClientMessageMenuReady).class_ref();
@@ -166,13 +168,13 @@ public class Environment
         void *mainBundle = CFBundleGetMainBundle();
         void *resourcesURL = CFBundleCopyResourcesDirectoryURL(mainBundle);
         char path[PATH_MAX];
-        if (!CFURLGetFileSystemRepresentation(resourcesURL, true, (uint8*)path, PATH_MAX))
-        {
-            // error!
-        }
-        CFRelease(resourcesURL);
 
-        GLib.Environment.set_current_dir((string)path);
+        if (!CFURLGetFileSystemRepresentation(resourcesURL, true, (uint8*)path, PATH_MAX))
+            log(LogType.ERROR, "Environment", "Could not set working dir");
+        else
+            GLib.Environment.set_current_dir((string)path);
+
+        CFRelease(resourcesURL);
 	#endif
     }
 
