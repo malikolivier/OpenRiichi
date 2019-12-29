@@ -146,7 +146,7 @@ namespace GameServer
 
             int starting_dealer = 0;
             int starting_score = 25000;
-            int decision_time = 10 + 1; // Add a second so the indicator counts down to 0
+            int decision_time = 60 + 1; // Add a second so the indicator counts down to 0
             int round_wait_time = 15;
             int hanchan_wait_time = 30;
             int game_wait_time = 60;
@@ -205,7 +205,7 @@ namespace GameServer
 
             int starting_dealer = log.starting_dealer;
             int starting_score = log.starting_score;
-            int decision_time = 0;//10 + 1; // Add a second so the indicator counts down to 0
+            int decision_time = 0;//60 + 1; // Add a second so the indicator counts down to 0
             int round_wait_time = log.round_wait_time;
             int hanchan_wait_time = log.hanchan_wait_time;
             int game_wait_time = log.game_wait_time;
